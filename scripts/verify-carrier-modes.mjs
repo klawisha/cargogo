@@ -1,0 +1,4 @@
+import fs from 'node:fs';
+const root=new URL('../',import.meta.url);const read=p=>fs.readFileSync(new URL(p,root),'utf8');
+const mig=read('infra/postgres/migrations/026_carrier_modes.sql');const svc=read('apps/api/src/carrier-mode/carrier-mode.service.ts');const trip=read('apps/api/src/trips/trip.service.ts');const offer=read('apps/api/src/offers/offer.service.ts');const ui=read('apps/mobile/app/carrier-mode.tsx');
+for(const [name,ok] of [['migration',mig.includes('carrier_profile')&&mig.includes('carrier_mode_snapshot')],['casual limits',svc.includes('maxTrips30d:8')&&svc.includes('CASUAL_COST_SHARING_CAP')],['professional gate',svc.includes('PROFESSIONAL_VERIFICATION_REQUIRED')],['trip enforcement',trip.includes('assertTripAllowed')],['offer enforcement',offer.includes('assertOfferAllowed')],['mobile modes',ui.includes('ПОПУТНИК')&&ui.includes('ПРОФЕСІЙНИЙ')]])if(!ok)throw new Error('FAIL '+name);console.log('PASS carrier modes + casual anti-commercial policy');

@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "CargoGo",
+    "slug": "cargogo",
+    "version": "1.4.2",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "cargogo",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "dark",
+          "hidden": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "CargoGo uses the camera to capture pickup and delivery evidence for deal safety.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "CargoGo uses your location during cargo pickup and delivery to strengthen handover evidence and resolve disputes."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "deal-events"
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.cargogo.app",
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/app-icon.png",
+        "backgroundColor": "#061016"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.cargogo.app"
+    },
+    "icon": "./assets/brand/app-icon.png"
+  }
+}

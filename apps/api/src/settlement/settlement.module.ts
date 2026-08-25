@@ -1,0 +1,2 @@
+import { Module } from '@nestjs/common';import { EconomicsModule } from '../economics/economics.module';import { NotificationModule } from '../notifications/notification.module';import { PayoutAccountModule } from '../payout-accounts/payout-account.module';import { SettlementService } from './settlement.service';
+@Module({imports:[PayoutAccountModule,NotificationModule,EconomicsModule],providers:[SettlementService],exports:[SettlementService]})export class SettlementModule{}

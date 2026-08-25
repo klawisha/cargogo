@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const need=(p,frags)=>{const s=fs.readFileSync(p,'utf8');for(const f of frags)if(!s.includes(f))throw new Error(`${p}: missing ${f}`)};
+need('apps/mobile/src/ui/route-preview.tsx',['POINTS','SCHEMATIC ROUTE','Segment']);
+need('apps/mobile/src/ui/badger-mark.tsx',['badger-mark-512.png','resizeMode="contain"','CargoGo badger mark']);
+need('apps/mobile/src/ui/waiting-pulse.tsx',['badger-run-hero.png','badger-run-token.png','BADGER RUN','ЖИТТЯ']);
+need('apps/mobile/src/theme/tokens.ts',["accent:'#F28A3D'","background:'#061016'"]);
+need('apps/mobile/app/(tabs)/index.tsx',['RoutePreview','ROUTE ENGINE · SCHEMATIC']);
+need('apps/mobile/app/trip/[id].tsx',['RoutePreview compact']);
+for(const p of ['apps/mobile/assets/brand/badger-mark-512.png','apps/mobile/assets/brand/badger-run-hero.png','apps/mobile/assets/brand/badger-run-token.png'])if(!fs.existsSync(p)||fs.statSync(p).size<5000)throw new Error(`${p}: mascot asset missing`);
+console.log('PASS route preview + Badger visual identity fixture');

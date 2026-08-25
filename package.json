@@ -1,0 +1,49 @@
+{
+  "name": "cargogo",
+  "version": "1.4.6",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=@cargogo/api",
+    "dev:mobile": "npm run start --workspace=@cargogo/mobile",
+    "build:api": "npm run build --workspace=@cargogo/api",
+    "db:migrate": "npm run db:migrate --workspace=@cargogo/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "verify:modules": "npm run verify:modules --workspace=@cargogo/api",
+    "verify:payments": "node scripts/verify-liqpay-signature.mjs",
+    "verify:economics": "node scripts/verify-economics.mjs",
+    "verify:verification": "node scripts/verify-verification.mjs",
+    "verify:verification-upload": "node scripts/verify-verification-upload.mjs",
+    "verify:verification-mobile": "node scripts/verify-mobile-verification-upload.mjs",
+    "verify:handover-evidence": "node scripts/verify-handover-evidence.mjs",
+    "verify:disputes": "node scripts/verify-disputes.mjs",
+    "verify:delivery-refusal": "node scripts/verify-delivery-refusal.mjs",
+    "verify:handover-sync": "node scripts/verify-handover-sync.mjs",
+    "verify:moderator-evidence": "node scripts/verify-moderator-evidence.mjs",
+    "verify:handover-limits": "node scripts/verify-handover-limits.mjs",
+    "verify:dispute-auth-phone": "node scripts/verify-dispute-auth-phone.mjs",
+    "verify:staff-workspace": "node scripts/verify-staff-workspace.mjs",
+    "verify:declared-value": "node scripts/verify-declared-value.mjs",
+    "verify:live-experience": "node scripts/verify-live-experience.mjs",
+    "verify:trip-edit-brand": "node scripts/verify-trip-edit-brand.mjs",
+    "verify:route-badger": "node scripts/verify-route-badger.mjs",
+    "verify:ui-polish": "node scripts/verify-ui-polish.mjs",
+    "verify:carrier-modes": "node scripts/verify-carrier-modes.mjs",
+    "verify:professional-ui": "node scripts/verify-professional-ui.mjs",
+    "verify:professional-review": "node scripts/verify-professional-review.mjs",
+    "verify:matching-current": "node scripts/verify-matching-current.mjs"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "expo-dev-client": "~57.0.15",
+    "expo": "57.0.16",
+    "react": "19.2.3",
+    "react-native": "0.86.2"
+  }
+}

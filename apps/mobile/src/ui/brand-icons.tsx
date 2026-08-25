@@ -1,0 +1,9 @@
+import { View, type ColorValue } from 'react-native';
+
+type IconName='route'|'deals'|'chats'|'profile';
+export function BrandIcon({name,color,size=20}:{name:IconName;color:ColorValue;size?:number}){
+  if(name==='route')return <View style={{width:size,height:size}}><View style={{position:'absolute',left:size*.18,top:size*.62,width:size*.68,height:2,borderRadius:2,backgroundColor:color,transform:[{rotate:'-24deg'}]}}/><View style={{position:'absolute',left:size*.08,top:size*.62,width:size*.26,height:size*.26,borderRadius:size*.13,borderWidth:2,borderColor:color}}/><View style={{position:'absolute',right:size*.05,top:size*.18,width:size*.28,height:size*.28,borderRadius:size*.14,backgroundColor:color}}/></View>;
+  if(name==='deals')return <View style={{width:size,height:size,alignItems:'center',justifyContent:'center'}}><View style={{width:size*.52,height:size*.52,borderWidth:2,borderColor:color,transform:[{rotate:'45deg'}],borderRadius:2}}/></View>;
+  if(name==='chats')return <View style={{width:size,height:size,alignItems:'center',justifyContent:'center'}}><View style={{width:size*.82,height:size*.58,borderWidth:2,borderColor:color,borderRadius:size*.18,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:2}}>{[0,1,2].map(i=><View key={i} style={{width:2.5,height:2.5,borderRadius:2,backgroundColor:color}}/>)}</View><View style={{position:'absolute',bottom:size*.12,right:size*.18,width:size*.18,height:2,backgroundColor:color,transform:[{rotate:'-35deg'}]}}/></View>;
+  return <View style={{width:size,height:size,alignItems:'center'}}><View style={{width:size*.34,height:size*.34,borderRadius:size*.17,borderWidth:2,borderColor:color}}/><View style={{position:'absolute',bottom:size*.05,width:size*.72,height:size*.36,borderTopLeftRadius:size*.36,borderTopRightRadius:size*.36,borderWidth:2,borderBottomWidth:0,borderColor:color}}/></View>;
+}

@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const must=(p,s)=>{const t=fs.readFileSync(p,'utf8');if(!t.includes(s))throw new Error(`${p}: missing ${s}`)};
+must('apps/mobile/app/staff.tsx','Trust Workspace');
+must('apps/mobile/app/staff.tsx',"router.push('/verification-review')");
+must('apps/mobile/app/staff.tsx',"router.push('/dispute-review')");
+must('apps/mobile/app/staff.tsx',"router.push('/payout-review')");
+must('apps/api/src/staff/staff.controller.ts',"@Controller('staff')");
+must('apps/api/src/common/request-user.ts',"'reviewer'");
+must('infra/postgres/migrations/023_combined_reviewer_role.sql',"'reviewer'");
+console.log('PASS reviewer staff workspace fixture');

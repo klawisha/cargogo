@@ -1,0 +1,11 @@
+# v1.0.0
+- immutable fee/payable snapshot at offer acceptance;
+- encrypted carrier IBAN payout account;
+- carrier payout account required before offer creation;
+- two-stage payment shaped for LiqPay HOLD -> hold_completion;
+- automatic settlement after delivery confirmation;
+- finance ledger;
+- automatic sandbox payout;
+- production payout safety gate (`manual_review` until provider capability is approved);
+- profile payment/payout settings UI;
+- deal financial breakdown UI.
