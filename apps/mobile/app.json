@@ -2,7 +2,7 @@
   "expo": {
     "name": "CargoGo",
     "slug": "cargogo",
-    "version": "1.4.2",
+    "version": "1.5.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "cargogo",
@@ -39,6 +39,11 @@
     "android": {
       "package": "com.cargogo.app",
       "edgeToEdgeEnabled": true,
+      "config": {
+    "googleMaps": {
+      "apiKey": "AIzaSyCmHQQfEqKsQ8mx4Cz7dhLi1TV6gNu5-94"
+     }
+    },
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/app-icon.png",
         "backgroundColor": "#061016"

@@ -1,27 +1,32 @@
-import { useMemo, useState } from 'react';
-import { Text, View, type LayoutChangeEvent } from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Text, View } from 'react-native';
+import MapView, { Marker, Polyline, type LatLng } from 'react-native-maps';
 import { colors, radii, themedStyleSheet } from '@/theme/tokens';
 
-type P={x:number;y:number};
-const POINTS:P[]=[{x:.07,y:.77},{x:.19,y:.67},{x:.28,y:.72},{x:.40,y:.54},{x:.53,y:.58},{x:.63,y:.39},{x:.74,y:.43},{x:.91,y:.19}];
-function Segment({a,b,w,h}:{a:P;b:P;w:number;h:number}){const x1=a.x*w,y1=a.y*h,x2=b.x*w,y2=b.y*h;const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;return <View style={[s.segment,{left:(x1+x2)/2-len/2,top:(y1+y2)/2-2,width:len,transform:[{rotate:`${ang}deg`}]}]}/>}
-export function RoutePreview({origin,destination,distance,compact=false}:{origin:string;destination:string;distance?:string;compact?:boolean}){
- const[size,setSize]=useState({w:0,h:0});const points=useMemo(()=>POINTS,[]);const onLayout=(e:LayoutChangeEvent)=>setSize({w:e.nativeEvent.layout.width,h:e.nativeEvent.layout.height});
- return <View style={[s.card,compact&&s.compact]} onLayout={onLayout}>
-   <View style={s.gridA}/><View style={s.gridB}/><View style={s.roadGhostA}/><View style={s.roadGhostB}/>
-   {!!size.w&&points.slice(0,-1).map((p,i)=><Segment key={i} a={p} b={points[i+1]} w={size.w} h={size.h}/>)}
-   {!!size.w&&points.map((p,i)=><View key={`n${i}`} style={[s.node,{left:p.x*size.w-3,top:p.y*size.h-3},i===0&&s.startNode,i===points.length-1&&s.endNode]}/>) }
-   <View style={s.origin}><Text numberOfLines={1} style={s.place}>{origin}</Text></View>
-   <View style={s.destination}><Text numberOfLines={1} style={s.place}>{destination}</Text></View>
-   {!!distance&&<View style={s.distance}><Text style={s.distanceText}>{distance}</Text><Text style={s.distanceSub}>SCHEMATIC ROUTE</Text></View>}
+type Props={origin:string;destination:string;distance?:string;durationS?:number|null;coordinates?:LatLng[];compact?:boolean};
+export function RoutePreview({origin,destination,distance,durationS,coordinates=[],compact=false}:Props){
+ const ref=useRef<MapView|null>(null);
+ const route=useMemo(()=>coordinates.filter(p=>Number.isFinite(p.latitude)&&Number.isFinite(p.longitude)),[coordinates]);
+ useEffect(()=>{if(route.length>1){const timer=setTimeout(()=>ref.current?.fitToCoordinates(route,{edgePadding:{top:48,right:36,bottom:48,left:36},animated:false}),120);return()=>clearTimeout(timer)}},[route]);
+ const start=route[0],end=route[route.length-1];
+ const routeKey=useMemo(()=>route.length>1?`${route.length}:${route[0].latitude.toFixed(5)},${route[0].longitude.toFixed(5)}:${route[route.length-1].latitude.toFixed(5)},${route[route.length-1].longitude.toFixed(5)}:${route[Math.floor(route.length/2)].latitude.toFixed(5)},${route[Math.floor(route.length/2)].longitude.toFixed(5)}`:'empty',[route]);
+ const duration=durationS?`${Math.floor(durationS/3600)?`${Math.floor(durationS/3600)} год `:''}${Math.max(1,Math.round((durationS%3600)/60))} хв`:null;
+ if(route.length<2)return <View style={[s.fallback,compact&&s.compact]}><Text style={s.fallbackEye}>ROUTE ENGINE</Text><Text style={s.fallbackTitle}>{origin} → {destination}</Text><Text style={s.fallbackSub}>Маршрут ще не має дорожньої геометрії. Вкажіть MAPBOX_ACCESS_TOKEN на API та оновіть поїздку.</Text></View>;
+ return <View style={[s.card,compact&&s.compact]}>
+   <MapView key={routeKey} ref={ref} style={s.map} rotateEnabled={false} pitchEnabled={false} toolbarEnabled={false} showsCompass={false} showsBuildings={false}>
+    <Polyline key={`line:${routeKey}`} coordinates={route} strokeColor={String(colors.accent)} strokeWidth={5}/>
+    <Marker coordinate={start} title={origin}><View style={s.startMarker}><View style={s.startDot}/></View></Marker>
+    <Marker coordinate={end} title={destination}><View style={s.endMarker}/></Marker>
+   </MapView>
+   <View pointerEvents="none" style={s.topBadge}><Text style={s.badgeEye}>ROAD ROUTE</Text><Text style={s.badgeValue}>{distance??'—'}{duration?` · ${duration}`:''}</Text></View>
+   <View pointerEvents="none" style={s.origin}><Text numberOfLines={1} style={s.place}>● {origin}</Text></View>
+   <View pointerEvents="none" style={s.destination}><Text numberOfLines={1} style={s.place}>◆ {destination}</Text></View>
  </View>
 }
 const s=themedStyleSheet(()=>({
- card:{height:174,borderRadius:radii.lg,overflow:'hidden',backgroundColor:colors.surfaceMuted,borderWidth:1,borderColor:colors.border,position:'relative'},compact:{height:130},
- gridA:{position:'absolute',left:-20,right:-20,top:48,height:1,backgroundColor:colors.border,opacity:.42,transform:[{rotate:'8deg'}]},gridB:{position:'absolute',left:-20,right:-20,top:108,height:1,backgroundColor:colors.border,opacity:.35,transform:[{rotate:'-12deg'}]},
- roadGhostA:{position:'absolute',width:'74%',height:2,left:'8%',top:'47%',backgroundColor:colors.borderStrong,opacity:.25,transform:[{rotate:'-23deg'}]},roadGhostB:{position:'absolute',width:'58%',height:2,right:'-3%',top:'62%',backgroundColor:colors.borderStrong,opacity:.18,transform:[{rotate:'18deg'}]},
- segment:{position:'absolute',height:4,borderRadius:3,backgroundColor:colors.accent,shadowColor:colors.accent,shadowOpacity:.4,shadowRadius:5,elevation:2},
- node:{position:'absolute',width:6,height:6,borderRadius:3,backgroundColor:colors.accentStrong,borderWidth:1,borderColor:colors.surfaceMuted},startNode:{width:13,height:13,borderRadius:7,marginLeft:-3.5,marginTop:-3.5,borderWidth:3,borderColor:colors.accent,backgroundColor:colors.surfaceMuted},endNode:{width:14,height:14,borderRadius:7,marginLeft:-4,marginTop:-4,backgroundColor:colors.accent,borderColor:colors.accentStrong},
- origin:{position:'absolute',left:10,bottom:10,maxWidth:'46%',paddingHorizontal:9,paddingVertical:6,borderRadius:radii.pill,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.borderStrong},destination:{position:'absolute',right:10,top:10,maxWidth:'46%',paddingHorizontal:9,paddingVertical:6,borderRadius:radii.pill,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.accent},place:{color:colors.text,fontSize:9,fontWeight:'900'},
- distance:{position:'absolute',left:12,top:12},distanceText:{color:colors.text,fontSize:15,fontWeight:'900'},distanceSub:{color:colors.muted,fontSize:7,fontWeight:'900',letterSpacing:1,marginTop:2}
+ card:{height:220,borderRadius:radii.lg,overflow:'hidden',backgroundColor:colors.surfaceMuted,borderWidth:1,borderColor:colors.border,position:'relative'},compact:{height:165},map:{...({position:'absolute',left:0,right:0,top:0,bottom:0} as const)},
+ topBadge:{position:'absolute',left:10,top:10,paddingHorizontal:10,paddingVertical:7,borderRadius:radii.md,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.borderStrong},badgeEye:{color:colors.accent,fontSize:7,fontWeight:'900',letterSpacing:1.1},badgeValue:{color:colors.text,fontSize:12,fontWeight:'900',marginTop:2},
+ origin:{position:'absolute',left:10,bottom:10,maxWidth:'45%',paddingHorizontal:9,paddingVertical:6,borderRadius:radii.pill,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.borderStrong},destination:{position:'absolute',right:10,bottom:10,maxWidth:'45%',paddingHorizontal:9,paddingVertical:6,borderRadius:radii.pill,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.accent},place:{color:colors.text,fontSize:8,fontWeight:'900'},
+ startMarker:{width:22,height:22,borderRadius:11,borderWidth:3,borderColor:colors.accent,backgroundColor:colors.surfaceRaised,alignItems:'center',justifyContent:'center'},startDot:{width:6,height:6,borderRadius:3,backgroundColor:colors.accent},endMarker:{width:18,height:18,borderRadius:5,backgroundColor:colors.accent,borderWidth:3,borderColor:colors.surfaceRaised,transform:[{rotate:'45deg'}]},
+ fallback:{height:220,borderRadius:radii.lg,padding:18,justifyContent:'center',backgroundColor:colors.surfaceMuted,borderWidth:1,borderColor:colors.border},fallbackEye:{color:colors.accent,fontSize:8,fontWeight:'900',letterSpacing:1.2},fallbackTitle:{color:colors.text,fontSize:15,fontWeight:'900',marginTop:7},fallbackSub:{color:colors.textSecondary,fontSize:10,lineHeight:15,marginTop:7}
 }));

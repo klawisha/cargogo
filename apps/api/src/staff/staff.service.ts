@@ -16,6 +16,7 @@ export class StaffService {
       professionalCarriers: role === 'reviewer' || role === 'verification_reviewer' || role === 'admin',
       disputes: role === 'reviewer' || role === 'dispute_reviewer' || role === 'admin',
       payoutIssues: role === 'reviewer' || role === 'dispute_reviewer' || role === 'admin',
+      finance: role === 'reviewer' || role === 'admin',
     };
   }
 

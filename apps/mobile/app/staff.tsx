@@ -8,7 +8,7 @@ import { colors, radii, themedStyleSheet } from '@/theme/tokens';
 import { Screen } from '@/ui/screen';
 import {useLiveVersion} from '@/live/live-context';
 
-type Overview={role:string;capabilities:{verification:boolean;professionalCarriers:boolean;disputes:boolean;payoutIssues:boolean};counts:{verification:number;professionalCarriers:number;disputes:number;payoutIssues:number}};
+type Overview={role:string;capabilities:{verification:boolean;professionalCarriers:boolean;disputes:boolean;payoutIssues:boolean;finance:boolean};counts:{verification:number;professionalCarriers:number;disputes:number;payoutIssues:number}};
 
 export default function StaffHome(){const live=useLiveVersion('staff','notifications');
   const {user,logout}=useAuth(); const {mode,setMode}=useAppTheme(); const [data,setData]=useState<Overview|null>(null); const [err,setErr]=useState('');
@@ -24,6 +24,7 @@ export default function StaffHome(){const live=useLiveVersion('staff','notificat
     {data?.capabilities.verification&&<QueueCard title="Верифікації" count={data.counts.verification} meta="Особа · права · автомобіль" action="ВІДКРИТИ ЧЕРГУ" onPress={()=>router.push('/verification-review')}/>}
     {data?.capabilities.professionalCarriers&&<QueueCard title="ФОП / бізнес" count={data.counts.professionalCarriers} meta="Реквізити · статус особи · права · авто" action="ПЕРЕВІРИТИ ПРОФІЛІ" onPress={()=>router.push('/professional-review')}/>}
     {data?.capabilities.disputes&&<QueueCard title="Спори" count={data.counts.disputes} meta="Evidence · GPS · handover · рішення" action="РОЗГЛЯНУТИ СПОРИ" onPress={()=>router.push('/dispute-review')}/>}
+    {data?.capabilities.finance&&<QueueCard title="Фінанси & ресурси" count={0} meta="GMV · маржа · API · інфраструктура" action="ВІДКРИТИ CONTROL CENTER" onPress={()=>router.push('/staff-finance')}/>}
     {data?.capabilities.payoutIssues&&<QueueCard title="Проблемні виплати" count={data.counts.payoutIssues} meta="Failed / manual review · без ручного руху коштів" action="ВІДКРИТИ" onPress={()=>router.push('/payout-review')}/>}
     <Text style={s.section}>РОБОЧЕ СЕРЕДОВИЩЕ</Text>
     <View style={s.theme}><View style={{flex:1}}><Text style={s.themeTitle}>Тема</Text><Text style={s.themeMeta}>Налаштування тільки цього пристрою.</Text></View><View style={s.segment}><Pressable onPress={()=>void setMode('dark')} style={[s.seg,mode==='dark'&&s.segOn]}><Text style={[s.segText,mode==='dark'&&s.segTextOn]}>ТЕМНА</Text></Pressable><Pressable onPress={()=>void setMode('light')} style={[s.seg,mode==='light'&&s.segOn]}><Text style={[s.segText,mode==='light'&&s.segTextOn]}>СВІТЛА</Text></Pressable><Pressable onPress={()=>void setMode('badger')} style={[s.seg,mode==='badger'&&s.segOn]}><Text style={[s.segText,mode==='badger'&&s.segTextOn]}>BADGER</Text></Pressable></View></View>

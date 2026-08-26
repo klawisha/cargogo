@@ -39,6 +39,8 @@ const envSchema = z.object({
   VERIFICATION_REVIEW_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(900).default(300),
   VERIFICATION_DOCUMENT_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   DEAL_CODE_SECRET: z.string().min(32).default(DEV_CODE_SECRET),
+  MAPBOX_ACCESS_TOKEN: z.string().optional(),
+  ROUTING_PROVIDER: z.enum(['auto','mapbox','fallback']).default('auto'),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV === 'production' && value.PAYMENTS_MODE === 'mock') {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['PAYMENTS_MODE'], message: 'Mock payments are forbidden in production' });

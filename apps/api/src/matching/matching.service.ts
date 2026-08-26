@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 
-// Matching v3: corridor + direction + ETA-aware time windows + rotatable cargo dimensions.
+// Matching v4: corridor + direction + ETA-aware time windows + rotatable cargo dimensions.
 // Route geometry is still based on our current routing source, but matching no longer treats a stale
 // trip or a cargo that can only be collected long after the driver passes it as a good candidate.
 const matchProjection = `
@@ -74,7 +74,7 @@ const matchProjection = `
 const upsert=`ON CONFLICT(trip_id,cargo_id) DO UPDATE SET pickup_distance_m=EXCLUDED.pickup_distance_m,delivery_distance_m=EXCLUDED.delivery_distance_m,pickup_fraction=EXCLUDED.pickup_fraction,delivery_fraction=EXCLUDED.delivery_fraction,estimated_extra_m=EXCLUDED.estimated_extra_m,score=EXCLUDED.score,score_city=EXCLUDED.score_city,score_proximity=EXCLUDED.score_proximity,score_direction=EXCLUDED.score_direction,score_capacity=EXCLUDED.score_capacity,score_time=EXCLUDED.score_time,score_reward=EXCLUDED.score_reward,match_kind=EXCLUDED.match_kind,computed_at=now()`;
 @Injectable() export class MatchingService{
  constructor(@Inject(DatabaseService) private readonly db:DatabaseService){}
- async recomputeTrip(client:PoolClient,tripId:string){await client.query('DELETE FROM trip_match WHERE trip_id=$1',[tripId]);await client.query(`INSERT INTO trip_match(trip_id,cargo_id,pickup_distance_m,delivery_distance_m,pickup_fraction,delivery_fraction,estimated_extra_m,score,score_city,score_proximity,score_direction,score_capacity,score_time,score_reward,match_kind) ${matchProjection} WHERE trip_id=$1 ${upsert}`,[tripId]);await client.query('UPDATE trip SET matching_version=3 WHERE id=$1',[tripId]);}
+ async recomputeTrip(client:PoolClient,tripId:string){await client.query('DELETE FROM trip_match WHERE trip_id=$1',[tripId]);await client.query(`INSERT INTO trip_match(trip_id,cargo_id,pickup_distance_m,delivery_distance_m,pickup_fraction,delivery_fraction,estimated_extra_m,score,score_city,score_proximity,score_direction,score_capacity,score_time,score_reward,match_kind) ${matchProjection} WHERE trip_id=$1 ${upsert}`,[tripId]);await client.query('UPDATE trip SET matching_version=4 WHERE id=$1',[tripId]);}
  async recomputeCargo(client:PoolClient,cargoId:string){await client.query('DELETE FROM trip_match WHERE cargo_id=$1',[cargoId]);await client.query(`INSERT INTO trip_match(trip_id,cargo_id,pickup_distance_m,delivery_distance_m,pickup_fraction,delivery_fraction,estimated_extra_m,score,score_city,score_proximity,score_direction,score_capacity,score_time,score_reward,match_kind) ${matchProjection} WHERE cargo_id=$1 ${upsert}`,[cargoId]);}
  async removeCargo(client:PoolClient,id:string){await client.query('DELETE FROM trip_match WHERE cargo_id=$1',[id]);}
  async removeTrip(client:PoolClient,id:string){await client.query('DELETE FROM trip_match WHERE trip_id=$1',[id]);}

@@ -1,6 +1,6 @@
 {
   "name": "cargogo",
-  "version": "1.4.6",
+  "version": "1.5.1",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -35,7 +35,9 @@
     "verify:carrier-modes": "node scripts/verify-carrier-modes.mjs",
     "verify:professional-ui": "node scripts/verify-professional-ui.mjs",
     "verify:professional-review": "node scripts/verify-professional-review.mjs",
-    "verify:matching-current": "node scripts/verify-matching-current.mjs"
+    "verify:matching-current": "node scripts/verify-matching-current.mjs",
+    "verify:road-routing": "node scripts/verify-road-routing.mjs",
+    "verify:finance-ops": "node scripts/verify-finance-ops.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -56,7 +56,7 @@ export type Trip = {
   departureUntil: string | null;
   maxDetourKm: number;
   capacity: { kg: number | null; lengthCm: number | null; widthCm: number | null; heightCm: number | null };
-  route: { distanceM: number | null; durationS: number | null; source: string; quality: 'rough' | 'routed' };
+  route: { distanceM: number | null; durationS: number | null; source: string; quality: 'rough' | 'routed'; coordinates: Array<{latitude:number;longitude:number}> };
   createdAt: string;
   updatedAt: string;
   lastUsedAt?: string | null;

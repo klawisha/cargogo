@@ -1,6 +1,6 @@
 {
   "name": "@cargogo/mobile",
-  "version": "1.4.6",
+  "version": "1.5.1",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -30,7 +30,8 @@
     "expo-location": "~57.0.9",
     "expo-notifications": "~57.0.12",
     "expo-device": "~57.0.1",
-    "expo-constants": "~57.0.12"
+    "expo-constants": "~57.0.12",
+    "react-native-maps": "1.27.2"
   },
   "devDependencies": {
     "@types/react": "19.1.16",
