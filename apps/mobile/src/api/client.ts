@@ -109,6 +109,10 @@ export async function uploadVerificationDocument(
   return { ok: result.status >= 200 && result.status < 300, status: result.status, data };
 }
 
+export async function reportClientError(input:{message:string;stack?:string;screen?:string;errorName?:string;metadata?:Record<string,unknown>}){
+  try{await apiFetch('/ops/client-error',{method:'POST',body:JSON.stringify({...input,platform:'android',appVersion:'1.6.5'})},false)}catch{}
+}
+
 export { API_URL };
 
 

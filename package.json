@@ -1,6 +1,6 @@
 {
   "name": "cargogo",
-  "version": "1.5.1",
+  "version": "1.6.5",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -37,7 +37,11 @@
     "verify:professional-review": "node scripts/verify-professional-review.mjs",
     "verify:matching-current": "node scripts/verify-matching-current.mjs",
     "verify:road-routing": "node scripts/verify-road-routing.mjs",
-    "verify:finance-ops": "node scripts/verify-finance-ops.mjs"
+    "verify:finance-ops": "node scripts/verify-finance-ops.mjs",
+    "verify:production-readiness": "node scripts/verify-production-readiness.mjs",
+    "release:gate": "node scripts/run-release-gate.mjs",
+    "verification:on": "powershell -ExecutionPolicy Bypass -File scripts/enable-verification.ps1",
+    "verify:reconsent": "node scripts/verify-reconsent-gate.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -7,3 +7,7 @@ must('apps/mobile/app/staff-finance.tsx','FREE TIER RADAR');
 must('apps/mobile/app/staff.tsx','Фінанси & ресурси');
 must('infra/postgres/migrations/028_staff_finance_usage.sql','operating_cost_plan');
 console.log('PASS finance + resource control center fixture');
+must('infra/postgres/migrations/029_mapbox_usage_backfill.sql',"route_source = 'mapbox-directions-v5'");
+must('apps/api/src/staff/staff-finance.service.ts','observedRouted');
+must('apps/mobile/app.config.js','GOOGLE_MAPS_ANDROID_API_KEY');
+must('apps/mobile/src/ui/waiting-pulse.tsx','width:34,height:34');

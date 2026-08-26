@@ -33,7 +33,7 @@ export default function Profile(){const live=useLiveVersion('notifications');
     <MenuRow icon="✓" title="Центр верифікації" meta={(profile?.verification?.status??user.verificationStatus).toUpperCase()} onPress={()=>router.push('/verification')}/>
     {(user.staffRole==='reviewer'||user.staffRole==='verification_reviewer'||user.staffRole==='admin')&&<MenuRow icon="ID" title="Черга верифікації" meta="STAFF" onPress={()=>router.push('/verification-review')}/>} 
     {(user.staffRole==='reviewer'||user.staffRole==='dispute_reviewer'||user.staffRole==='admin')&&<MenuRow icon="!" title="Спори" meta="STAFF" onPress={()=>router.push('/dispute-review')}/>} 
-    <MenuRow icon="•" title="Сповіщення" meta={unread?`${unread} НОВИХ`:'ВІДКРИТИ'} onPress={()=>router.push('/notifications')}/>
+    <MenuRow icon="§" title="Правові документи" meta="TERMS · PRIVACY · PAYMENTS" onPress={()=>router.push('/legal')}/><MenuRow icon="P" title="Конфіденційність і дані" meta="ACCESS · DELETE · RETENTION" onPress={()=>router.push('/privacy-center')}/><MenuRow icon="•" title="Сповіщення" meta={unread?`${unread} НОВИХ`:'ВІДКРИТИ'} onPress={()=>router.push('/notifications')}/>
     <View style={s.info}><View style={s.infoHead}><BadgerMark size={28} quiet/><Text style={s.infoTitle}>TRUST LAYER</Text></View><Text style={s.cardText}>Рейтинг формується тільки завершеними угодами. Документальна KYC-перевірка лишається окремим захищеним потоком.</Text></View>
     <Pressable onPress={signOut} style={({pressed})=>[s.logout,pressed&&{opacity:.7}]}><Text style={s.logoutText}>ВИЙТИ З АКАУНТА</Text><Text style={s.logoutText}>→</Text></Pressable>
   </ScrollView></Screen>;

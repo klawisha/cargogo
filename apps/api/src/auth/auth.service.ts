@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from './password';
 import { hashToken, newOpaqueToken } from './token';
 import type { LoginInput, RegisterInput } from './auth.schemas';
 import type { RequestUser } from '../common/request-user';
+import { LEGAL_VERSION } from '../legal/legal.documents';
 
 interface UserRow {
   id: string; email: string | null; phone_e164: string | null; display_name: string; password_hash: string; status: RequestUser['status'];
@@ -44,10 +45,15 @@ export class AuthService {
     const phone = this.normalizePhone(input.phone);
     const existing = await this.db.query('SELECT 1 FROM app_user WHERE phone_e164=$1 LIMIT 1', [phone]);
     if (existing.rowCount) throw new ConflictException({ code: 'PHONE_IN_USE', message: 'Phone number is already registered' });
+    if (input.legalVersion !== LEGAL_VERSION) throw new ConflictException({code:'LEGAL_VERSION_STALE',message:'Please review the current Terms and Privacy Policy'});
     const passwordHash = await hashPassword(input.password);
-    const result = await this.db.query<UserRow>(`INSERT INTO app_user(phone_e164,display_name,password_hash)
-      VALUES($1,$2,$3) RETURNING id,email,phone_e164,display_name,password_hash,status,verification_status,staff_role`, [phone, input.displayName.trim(), passwordHash]);
-    const user = result.rows[0];
+    const user = await this.db.transaction(async client=>{
+      const result = await client.query<UserRow>(`INSERT INTO app_user(phone_e164,display_name,password_hash) VALUES($1,$2,$3) RETURNING id,email,phone_e164,display_name,password_hash,status,verification_status,staff_role`, [phone, input.displayName.trim(), passwordHash]);
+      const created=result.rows[0];
+      for(const key of ['terms-of-use','privacy-policy']) await client.query(`INSERT INTO legal_acceptance(user_id,document_key,document_version,ip,user_agent,metadata) VALUES($1,$2,$3,$4,$5,$6::jsonb)`,[created.id,key,LEGAL_VERSION,metadata.ip??null,metadata.userAgent??null,JSON.stringify({source:'registration'})]);
+      await client.query(`INSERT INTO audit_event(actor_user_id,event_type,entity_type,metadata) VALUES($1,'legal.registration_acceptance','legal_document',$2::jsonb)`,[created.id,JSON.stringify({version:LEGAL_VERSION,documents:['terms-of-use','privacy-policy']})]);
+      return created;
+    });
     const session = await this.issueSession(user.id, metadata);
     await this.audit(user.id, session.sessionId, 'auth.register');
     return { user: this.publicUser(user), session };

@@ -1,0 +1,29 @@
+import { Redirect, router } from 'expo-router';
+import { useEffect,useMemo,useState } from 'react';
+import { ActivityIndicator,Pressable,ScrollView,Text,View } from 'react-native';
+import { apiFetch,readJsonSafe } from '@/api/client';
+import { useAuth } from '@/auth/auth-context';
+import { Screen } from '@/ui/screen';
+import { colors,radii,themedStyleSheet } from '@/theme/tokens';
+
+type LegalStatus={currentVersion:string;required:string[];accepted:{key:string;version:string;acceptedAt:string}[];currentRequiredAccepted:boolean};
+export default function LegalConsent(){
+ const{user}=useAuth();const[status,setStatus]=useState<LegalStatus|null>(null);const[checked,setChecked]=useState(false);const[busy,setBusy]=useState(false);const[error,setError]=useState('');
+ const load=async()=>{const r=await apiFetch('/legal/me');const x=await readJsonSafe<LegalStatus>(r);if(r.ok&&x)setStatus(x)};
+ useEffect(()=>{void load()},[]);
+ const missing=useMemo(()=>status?.required.filter(k=>!status.accepted.some(a=>a.key===k&&a.version===status.currentVersion))??[],[status]);
+ if(!user)return <Redirect href="/auth"/>;if(user.staffRole)return <Redirect href="/staff"/>;
+ const accept=async()=>{if(!status||!checked||busy)return;setBusy(true);setError('');try{for(const key of missing){const r=await apiFetch(`/legal/accept/${key}`,{method:'POST',body:JSON.stringify({version:status.currentVersion})});const x=await readJsonSafe<any>(r);if(!r.ok)throw new Error(x?.message??'Не вдалося зафіксувати згоду');}await load();router.replace('/(tabs)')}catch(e){setError(e instanceof Error?e.message:'Помилка підтвердження')}finally{setBusy(false)}};
+ return <Screen><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom:48}}>
+  <View style={s.head}><Text style={s.eye}>LEGAL UPDATE</Text><Text style={s.title}>Умови оновлено</Text><Text style={s.lead}>CargoGo оновив обов’язкові юридичні документи. Перед продовженням роботи з marketplace перегляньте актуальні редакції та підтвердьте їх.</Text></View>
+  <View style={s.version}><Text style={s.versionLabel}>CURRENT VERSION</Text><Text style={s.versionValue}>{status?.currentVersion??'Завантаження…'}</Text></View>
+  <Pressable onPress={()=>router.push({pathname:'/legal/[key]' as any,params:{key:'terms-of-use'}})} style={s.doc}><View><Text style={s.docTitle}>Умови використання</Text><Text style={s.docMeta}>Обов’язковий документ · відкрити повний текст</Text></View><Text style={s.arrow}>→</Text></Pressable>
+  <Pressable onPress={()=>router.push({pathname:'/legal/[key]' as any,params:{key:'privacy-policy'}})} style={s.doc}><View><Text style={s.docTitle}>Політика конфіденційності</Text><Text style={s.docMeta}>Обов’язковий документ · відкрити повний текст</Text></View><Text style={s.arrow}>→</Text></Pressable>
+  <View style={s.notice}><Text style={s.noticeTitle}>ЩО ЗМІНЮЄТЬСЯ</Text><Text style={s.noticeText}>Попереднє погодження зберігається в audit trail, але не замінює згоду з новою редакцією. До підтвердження нової версії читання даних і перегляд документів доступні, а дії, що створюють або змінюють marketplace-зобов’язання, заблоковані.</Text></View>
+  <Pressable onPress={()=>setChecked(v=>!v)} style={s.checkRow}><View style={[s.box,checked&&s.boxOn]}><Text style={s.tick}>{checked?'✓':''}</Text></View><Text style={s.checkText}>Я переглянув(ла) актуальні Умови використання та Політику конфіденційності і погоджуюся з ними.</Text></Pressable>
+  {!!error&&<Text style={s.error}>{error}</Text>}
+  <Pressable disabled={!checked||busy||!status} onPress={accept} style={[s.primary,(!checked||busy||!status)&&s.disabled]}>{busy?<ActivityIndicator/>:<><Text style={s.primaryText}>ПІДТВЕРДИТИ ТА ПРОДОВЖИТИ</Text><Text style={s.primaryText}>→</Text></>}</Pressable>
+  <Text style={s.foot}>Факт прийняття зберігається окремо для кожної редакції документа разом із часом та технічними метаданими сесії.</Text>
+ </ScrollView></Screen>
+}
+const s=themedStyleSheet(()=>({head:{paddingTop:28,paddingBottom:18},eye:{color:colors.accent,fontSize:10,fontWeight:'900',letterSpacing:1.8},title:{color:colors.text,fontSize:36,fontWeight:'900',marginTop:9},lead:{color:colors.textSecondary,fontSize:13,lineHeight:21,marginTop:13},version:{backgroundColor:colors.surface,borderWidth:1,borderColor:colors.borderStrong,borderRadius:radii.lg,padding:16,marginBottom:12},versionLabel:{color:colors.muted,fontSize:8,fontWeight:'900',letterSpacing:1.4},versionValue:{color:colors.text,fontSize:18,fontWeight:'900',marginTop:6},doc:{backgroundColor:colors.surface,borderWidth:1,borderColor:colors.border,borderRadius:radii.lg,padding:16,marginBottom:10,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},docTitle:{color:colors.text,fontSize:15,fontWeight:'900'},docMeta:{color:colors.muted,fontSize:9,marginTop:5},arrow:{color:colors.accent,fontSize:20,fontWeight:'900'},notice:{backgroundColor:colors.surfaceRaised,borderRadius:radii.lg,padding:16,marginTop:5},noticeTitle:{color:colors.accent,fontSize:9,fontWeight:'900',letterSpacing:1.3},noticeText:{color:colors.textSecondary,fontSize:11,lineHeight:18,marginTop:8},checkRow:{flexDirection:'row',gap:11,alignItems:'flex-start',paddingVertical:18},box:{width:24,height:24,borderRadius:7,borderWidth:1,borderColor:colors.borderStrong,alignItems:'center',justifyContent:'center'},boxOn:{backgroundColor:colors.accent},tick:{color:colors.background,fontWeight:'900'},checkText:{color:colors.text,fontSize:11.5,lineHeight:18,flex:1},error:{color:colors.danger,fontSize:10,marginBottom:10},primary:{minHeight:56,borderRadius:radii.md,backgroundColor:colors.accent,alignItems:'center',justifyContent:'space-between',paddingHorizontal:17,flexDirection:'row'},disabled:{opacity:.4},primaryText:{color:colors.background,fontSize:10,fontWeight:'900',letterSpacing:.8},foot:{color:colors.muted,fontSize:8.5,lineHeight:14,textAlign:'center',marginTop:14}}));

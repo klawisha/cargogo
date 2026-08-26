@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=process.cwd();
+const checks=[];const pass=(name,ok,detail='')=>{checks.push({name,ok,detail});console.log(`${ok?'PASS':'FAIL'} ${name}${detail?` — ${detail}`:''}`)};
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');const exists=p=>fs.existsSync(path.join(root,p));
+const legal=['TERMS_OF_USE.md','PRIVACY_POLICY.md','PAYMENT_REFUND_POLICY.md','DISPUTE_EVIDENCE_POLICY.md','CASUAL_CARRIER_POLICY.md','PROFESSIONAL_CARRIER_TERMS.md','PROHIBITED_CARGO_POLICY.md','DATA_RETENTION_DELETION_POLICY.md'];
+for(const f of legal)pass(`legal ${f}`,exists(`docs/legal/${f}`));
+const mig=read('infra/postgres/migrations/030_release_readiness.sql');const privacyMig=read('infra/postgres/migrations/031_privacy_request_workflow.sql');pass('versioned legal acceptance',mig.includes('CREATE TABLE IF NOT EXISTS legal_acceptance'));pass('privacy request workflow',mig.includes('CREATE TABLE IF NOT EXISTS privacy_request')&&privacyMig.includes('request_payload JSONB'));pass('client error telemetry',mig.includes('CREATE TABLE IF NOT EXISTS client_error_event'));
+const auth=read('apps/api/src/auth/auth.schemas.ts');pass('registration requires Terms',auth.includes('acceptTerms: z.literal(true)'));pass('registration requires Privacy',auth.includes('acceptPrivacy: z.literal(true)'));pass('registration pins legal version',auth.includes('legalVersion'));
+const env=read('apps/api/src/config/env.ts');pass('production legal operator gate',env.includes('LEGAL_OPERATOR_NAME')&&env.includes('LEGAL_DOCS_APPROVED'));pass('production KYC gate',env.includes("Production must enforce identity/driver/vehicle verification"));pass('production payment HTTPS gate',env.includes('Production payment mode requires a public HTTPS base URL'));
+const ops=read('apps/api/src/ops/ops.service.ts');pass('release control endpoint',ops.includes('async readiness'));pass('audit feed',ops.includes('audit_event'));pass('funnel metrics',ops.includes('cargo_offer')&&ops.includes("status='completed'"));pass('push health',ops.includes('push_delivery_outbox'));
+const ui=read('apps/mobile/app/staff-readiness.tsx');pass('reviewer release UI',ui.includes('Production readiness')&&ui.includes('MARKETPLACE FUNNEL'));pass('readiness refresh motion',ui.includes('Animated.loop')&&ui.includes('SYNCHRONIZING LIVE SIGNALS'));
+const privacy=read('apps/mobile/app/privacy-center.tsx');const staffPrivacy=read('apps/mobile/app/staff-privacy.tsx');pass('user privacy center',privacy.includes('DELETION')&&privacy.includes('ACCESS REQUEST'));pass('structured correction request',privacy.includes('currentValue')&&privacy.includes('requestedValue'));pass('structured restriction request',privacy.includes('scope')&&privacy.includes('reason'));pass('reviewer privacy response',staffPrivacy.includes('ВІДПОВІДЬ КОРИСТУВАЧУ')&&staffPrivacy.includes('in_review'));
+pass('privacy modal has no raw JSX whitespace node',!privacy.includes('/>} {c.extraLabel')&&!privacy.includes('/>} {!!validation'));
+const staffHome=read('apps/mobile/app/staff.tsx');const staffSvc=read('apps/api/src/staff/staff.service.ts');pass('privacy queue count wired',staffHome.includes('count={data.counts.privacy}')&&staffSvc.includes("privacy_request WHERE status IN ('open','in_review')"));
+pass('legal revision pinned',read('apps/api/src/legal/legal.documents.ts').includes("LEGAL_VERSION='2026-08-26-r2'")&&read('apps/mobile/app/auth.tsx').includes("legalVersion:'2026-08-26-r2'"));
+
+const rootLayout=read('apps/mobile/app/_layout.tsx');pass('root crash boundary',rootLayout.includes('ErrorBoundary')&&rootLayout.includes('reportClientError'));
+const notification=read('apps/api/src/notifications/notification.service.ts');pass('push retries',notification.includes('attempts<5')&&notification.includes('available_at'));pass('notification archive hygiene',notification.includes("interval '30 days'")&&notification.includes('LIMIT 150'));
+const failed=checks.filter(x=>!x.ok);console.log(`\n${checks.length-failed.length}/${checks.length} checks passed`);if(failed.length){process.exitCode=1}

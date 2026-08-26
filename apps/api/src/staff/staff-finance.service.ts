@@ -8,17 +8,23 @@ export class StaffFinanceService{
  constructor(private readonly db:DatabaseService){}
  private assert(user:RequestUser){if(!['reviewer','admin'].includes(user.staffRole??''))throw new ForbiddenException({code:'FINANCE_STAFF_REQUIRED',message:'Finance overview is available only to reviewer/admin'});}
  async dashboard(user:RequestUser){this.assert(user);
-   const [month,lifetime,statuses,usage,costs,storage]=await Promise.all([
+   const [month,lifetime,statuses,usage,costs,storage,routingObserved]=await Promise.all([
     this.summary(`date_trunc('month',now())`),this.summary(`'1970-01-01'::timestamptz`),
     this.db.query<any>(`SELECT status,count(*)::int count,coalesce(sum(agreed_amount_minor),0)::bigint amount FROM deal GROUP BY status ORDER BY count(*) DESC`),
     this.db.query<any>(`SELECT service_key AS "serviceKey",metric_key AS "metricKey",usage_value::bigint AS "usageValue",period_start AS "periodStart" FROM service_usage_counter WHERE period_start=date_trunc('month',now())::date ORDER BY service_key,metric_key`),
     this.db.query<any>(`SELECT key,label,category,amount_minor AS "amountMinor",currency,cadence,status,note,source_url AS "sourceUrl" FROM operating_cost_plan WHERE status<>'disabled' ORDER BY category,label`),
-    this.storageStats()
+    this.storageStats(),
+    this.db.query<any>(`SELECT count(*)::int routed FROM trip WHERE route_source='mapbox-directions-v5' AND coalesce(updated_at,created_at)>=date_trunc('month',now())`)
    ]);
-   const mapboxReq=this.metric(usage.rows,'mapbox_directions','requests');
+   const recordedMapboxReq=this.metric(usage.rows,'mapbox_directions','requests');
+   const observedRouted=Math.max(0,Number(routingObserved.rows[0]?.routed??0));
+   // A stored Mapbox-routed trip proves at least one Directions request happened, even if the
+   // usage table was introduced after that request. Never let the dashboard under-report below
+   // the number of current-month routed trip records; exact counting continues in RoutingService.
+   const mapboxReq=Math.max(recordedMapboxReq,observedRouted);
    const mapboxErr=this.metric(usage.rows,'mapbox_directions','errors');
    const usageCards=[
-    {key:'mapbox_directions',label:'Mapbox Directions',used:mapboxReq,limit:100000,unit:'requests',freeTier:true,status:mapboxReq>=90000?'critical':mapboxReq>=70000?'warning':'ok',detail:`${mapboxErr} errors this month`},
+    {key:'mapbox_directions',label:'Mapbox Directions',used:mapboxReq,limit:100000,unit:'requests',freeTier:true,status:mapboxReq>=90000?'critical':mapboxReq>=70000?'warning':'ok',detail:`${mapboxErr} errors this month · ${observedRouted} successful routed trip records observed`},
     {key:'cloudflare_r2_storage',label:'Object storage',used:storage.bytes,limit:10*1024*1024*1024,unit:'bytes',freeTier:true,status:storage.bytes>=9*1024**3?'critical':storage.bytes>=7*1024**3?'warning':'ok',detail:`${storage.objects} tracked objects · R2 free tier reference 10 GB-month`},
     {key:'r2_class_a',label:'R2 Class A operations',used:storage.writeEstimate,limit:1_000_000,unit:'operations',freeTier:true,status:'ok',detail:'Estimate from stored/upload records; provider console remains source of truth'},
     {key:'r2_class_b',label:'R2 Class B operations',used:storage.readEstimate,limit:10_000_000,unit:'operations',freeTier:true,status:'ok',detail:'Estimate from evidence access logs; provider console remains source of truth'},

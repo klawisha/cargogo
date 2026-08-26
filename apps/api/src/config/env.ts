@@ -41,6 +41,12 @@ const envSchema = z.object({
   DEAL_CODE_SECRET: z.string().min(32).default(DEV_CODE_SECRET),
   MAPBOX_ACCESS_TOKEN: z.string().optional(),
   ROUTING_PROVIDER: z.enum(['auto','mapbox','fallback']).default('auto'),
+  LEGAL_OPERATOR_NAME: z.string().optional(),
+  LEGAL_OPERATOR_TAX_ID: z.string().optional(),
+  LEGAL_OPERATOR_ADDRESS: z.string().optional(),
+  LEGAL_EMAIL: z.string().email().optional(),
+  PRIVACY_EMAIL: z.string().email().optional(),
+  LEGAL_DOCS_APPROVED: z.coerce.boolean().default(false),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV === 'production' && value.PAYMENTS_MODE === 'mock') {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['PAYMENTS_MODE'], message: 'Mock payments are forbidden in production' });
@@ -56,6 +62,13 @@ const envSchema = z.object({
   }
   if (value.NODE_ENV === 'production' && value.DEAL_CODE_SECRET === DEV_CODE_SECRET) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DEAL_CODE_SECRET'], message: 'Production must provide a unique DEAL_CODE_SECRET' });
+  }
+
+  if (value.NODE_ENV === 'production') {
+    for (const [key,val] of Object.entries({LEGAL_OPERATOR_NAME:value.LEGAL_OPERATOR_NAME,LEGAL_OPERATOR_TAX_ID:value.LEGAL_OPERATOR_TAX_ID,LEGAL_OPERATOR_ADDRESS:value.LEGAL_OPERATOR_ADDRESS,LEGAL_EMAIL:value.LEGAL_EMAIL,PRIVACY_EMAIL:value.PRIVACY_EMAIL})) {
+      if (!val) ctx.addIssue({code:z.ZodIssueCode.custom,path:[key],message:`Production requires ${key}`});
+    }
+    if (!value.LEGAL_DOCS_APPROVED) ctx.addIssue({code:z.ZodIssueCode.custom,path:['LEGAL_DOCS_APPROVED'],message:'Production requires final legal review and approval'});
   }
 
   const liqpay = value.PAYMENTS_MODE === 'liqpay_sandbox' || value.PAYMENTS_MODE === 'liqpay_production';

@@ -1,6 +1,6 @@
 {
   "name": "@cargogo/mobile",
-  "version": "1.5.1",
+  "version": "1.6.5",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {

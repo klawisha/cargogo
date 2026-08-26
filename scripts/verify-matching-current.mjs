@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 const need=(file,parts)=>{const s=fs.readFileSync(file,'utf8');for(const p of parts)if(!s.includes(p))throw new Error(`${file}: missing ${p}`)};
 need('infra/postgres/migrations/027_driver_match_context.sql',['driver_match_context','ON DELETE SET NULL','DISTINCT ON (driver_id)']);
-need('apps/api/src/matching/matching.service.ts',["matching_version=3","pickup_eta","delivery_eta","INTERVAL '2 hours'","c.height_cm<=t.capacity_length_cm"]);
+need('apps/api/src/matching/matching.service.ts',["matching_version=4","pickup_eta","delivery_eta","INTERVAL '2 hours'","c.height_cm<=t.capacity_length_cm"]);
 need('apps/api/src/trips/trip.service.ts',['async current(','setCurrentWithClient','myOfferStatus','pickupEta','LIMIT 200']);
 need('apps/api/src/trips/trip.controller.ts',["@Get('current')","@Post(':id/current')","tripMatchQuerySchema"]);
 need('apps/mobile/app/(tabs)/index.tsx',['ПОТОЧНИЙ MATCH',"apiFetch('/trips/current')"]);
 need('apps/mobile/app/create-trip.tsx',['Останній маршрут відновлено']);
 need('apps/mobile/app/trip/[id].tsx',['Пошук за вантажем або містом','МІН. ГАК','ЗРОБИТИ ПОТОЧНИМ ДЛЯ MATCHING']);
-console.log('PASS matching v3 + persistent current trip fixture');
+console.log('PASS matching v4 + persistent current trip fixture');

@@ -1,6 +1,6 @@
 {
   "name": "@cargogo/api",
-  "version": "1.5.1",
+  "version": "1.6.5",
   "private": true,
   "scripts": {
     "dev": "nest start --watch",

@@ -30,8 +30,10 @@ function lineStringWkt(coordinates:number[][]){
 @Injectable()
 export class RoutingService {
   constructor(private readonly config:ConfigService,private readonly db:DatabaseService){}
+  private usageWarningShown=false;
   private async usage(metricKey:string,delta=1){
-    try{await this.db.query(`INSERT INTO service_usage_counter(service_key,metric_key,period_start,usage_value) VALUES('mapbox_directions',$1,date_trunc('month',now())::date,$2) ON CONFLICT(service_key,metric_key,period_start) DO UPDATE SET usage_value=service_usage_counter.usage_value+EXCLUDED.usage_value,updated_at=now()`,[metricKey,delta]);}catch{}
+    try{await this.db.query(`INSERT INTO service_usage_counter(service_key,metric_key,period_start,usage_value) VALUES('mapbox_directions',$1,date_trunc('month',now())::date,$2) ON CONFLICT(service_key,metric_key,period_start) DO UPDATE SET usage_value=service_usage_counter.usage_value+EXCLUDED.usage_value,updated_at=now()`,[metricKey,delta]);}
+    catch(error){if(!this.usageWarningShown){this.usageWarningShown=true;console.warn('[routing] usage counter unavailable; finance dashboard will use routed-trip lower bound until DB migration is applied:',error instanceof Error?error.message:error);}}
   }
   async buildRoute(origin: Point,destination: Point): Promise<RouteResult> {
     const provider=this.config.get<string>('ROUTING_PROVIDER')??'auto';

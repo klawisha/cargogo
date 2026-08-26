@@ -25,6 +25,8 @@ import { EconomicsModule } from './economics/economics.module';
 import { StaffModule } from './staff/staff.module';
 import { LiveModule } from './live/live.module';
 import { CarrierModeModule } from './carrier-mode/carrier-mode.module';
+import { LegalModule } from './legal/legal.module';
+import { OpsModule } from './ops/ops.module';
 
 @Module({
   imports: [
@@ -34,7 +36,7 @@ import { CarrierModeModule } from './carrier-mode/carrier-mode.module';
       validate: validateEnv,
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
-    DatabaseModule, HealthModule, AuthModule, UsersModule, CarrierModeModule, LocationModule, NotificationModule, VerificationModule, DisputeModule, CargoModule, VehicleModule, TripModule, OfferModule, DealModule, PayoutAccountModule, EconomicsModule, SettlementModule, PaymentModule, ChatModule, StaffModule, LiveModule,
+    DatabaseModule, HealthModule, AuthModule, LegalModule, OpsModule, UsersModule, CarrierModeModule, LocationModule, NotificationModule, VerificationModule, DisputeModule, CargoModule, VehicleModule, TripModule, OfferModule, DealModule, PayoutAccountModule, EconomicsModule, SettlementModule, PaymentModule, ChatModule, StaffModule, LiveModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
