@@ -17,7 +17,31 @@ export function WaitingPulse(){
   useEffect(()=>{const speed=Math.max(215,500-Math.min(streak,8)*31);const t=setInterval(()=>setIndex(v=>(v+1)%NODE_COUNT),speed);return()=>clearInterval(t)},[streak]);
   useEffect(()=>{const a=Animated.loop(Animated.sequence([Animated.timing(pulse,{toValue:1,duration:760,useNativeDriver:true}),Animated.timing(pulse,{toValue:0,duration:760,useNativeDriver:true})]));a.start();return()=>a.stop()},[pulse]);
   const nodes=useMemo(()=>Array.from({length:NODE_COUNT},(_,i)=>i),[]);
-  async function tap(){const distance=Math.min(Math.abs(index-target),NODE_COUNT-Math.abs(index-target));if(distance===0){const next=streak+1;const nextBest=Math.max(best,next);setStreak(next);setBest(nextBest);setRound(r=>r+1);setLives(v=>Math.min(3,v+1));setMessage(next>=6?'Потік · медоїд тримає максимальний темп':next>=3?'Серія росте · маршрут прискорився':'Точно в маяк · +1 до серії');setTarget((target+3+round)%NODE_COUNT);if(nextBest!==best)void SecureStore.setItemAsync(BEST_KEY,String(nextBest)).catch(()=>{});return}if(distance===1){setMessage('Майже · серія збережена');setTarget((target+4)%NODE_COUNT);return}setStreak(0);setRound(r=>r+1);setLives(v=>{const n=v-1;if(n<=0){setMessage('Новий заїзд · три спроби відновлено');return 3}setMessage(`Обʼїзд · залишилось ${n} спроби`);return n});setTarget((target+5+round)%NODE_COUNT)}
+  async function tap(){
+    const distance=Math.min(Math.abs(index-target),NODE_COUNT-Math.abs(index-target));
+    if(distance===0){
+      const next=streak+1;const nextBest=Math.max(best,next);
+      setStreak(next);setBest(nextBest);setRound(r=>r+1);setLives(v=>Math.min(3,v+1));
+      setMessage(next>=6?'Потік · медоїд тримає максимальний темп':next>=3?'Серія росте · маршрут прискорився':'Точно в маяк · +1 до серії');
+      setTarget((target+3+round)%NODE_COUNT);
+      if(nextBest!==best)void SecureStore.setItemAsync(BEST_KEY,String(nextBest)).catch(()=>{});
+      return;
+    }
+    if(distance===1){setMessage('Майже · серія збережена');setTarget((target+4)%NODE_COUNT);return}
+
+    // A miss ends the current streak. Losing the last life starts a genuinely new run:
+    // the current score/round counter resets, while BEST remains persisted separately.
+    if(lives<=1){
+      setStreak(0);setRound(1);setLives(3);setIndex(0);setTarget(5);
+      setMessage('Новий заїзд · рахунок скинуто · три спроби відновлено');
+      return;
+    }
+
+    const remaining=lives-1;
+    setStreak(0);setRound(r=>r+1);setLives(remaining);
+    setMessage(`Обʼїзд · залишилось ${remaining} спроби`);
+    setTarget((target+5+round)%NODE_COUNT);
+  }
   const speed=Math.max(215,500-Math.min(streak,8)*31);
   return <View style={s.card}>
     <ImageBackground source={RUNNER_HERO} resizeMode="cover" imageStyle={s.heroImage} style={s.hero}>

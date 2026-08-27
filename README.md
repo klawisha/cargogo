@@ -243,3 +243,20 @@ PAYOUT_SANDBOX_ACTUAL_FEE_BPS=30
 PAYOUT_DATA_SECRET=change-this-development-secret-at-least-32-chars
 ```
 For LiqPay sandbox checkout use `PAYMENTS_MODE=liqpay_sandbox`, sandbox keys, and `LIQPAY_ACTION=hold`.
+
+## v1.8 grant-stage operations
+
+```powershell
+npm run db:migrate
+npm run verify:grant-readiness
+npm run demo:seed
+npm run backup:local
+```
+
+Reviewer Finance Ops includes CSV/XLSX exports and a separate self-hosted Diagnostics queue. `npm run demo:reset` removes only deterministic v1.8 demo entities. See `BACKUP_RESTORE.md` before using restore tooling.
+
+## Driver readiness and Google Maps key (v1.8.3)
+
+Before a user creates a driver trip, the mobile client now checks identity, driver licence + verified vehicle, and the active carrier-mode requirements. Incomplete users are sent to **Готовність до перевезень** instead of filling the trip form first. Backend verification/carrier enforcement remains authoritative.
+
+Google Maps Android key is intentionally not stored in the repository. For local builds put `GOOGLE_MAPS_ANDROID_API_KEY=...` in `apps/mobile/.env.local`. For EAS production configure the same variable in the EAS build environment. See `GOOGLE_MAPS_BUILD_KEY.md`.

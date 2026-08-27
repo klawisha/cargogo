@@ -19,18 +19,20 @@ export class StaffService {
       finance: role === 'reviewer' || role === 'admin',
       readiness: role === 'reviewer' || role === 'admin',
       privacy: role === 'reviewer' || role === 'admin',
+      diagnostics: role === 'reviewer' || role === 'admin',
     };
   }
 
   async overview(user: RequestUser) {
     this.assertStaff(user);
     const capabilities = this.capabilities(user.staffRole);
-    const [verification, professionalCarriers, disputes, payouts, privacy] = await Promise.all([
+    const [verification, professionalCarriers, disputes, payouts, privacy, diagnostics] = await Promise.all([
       capabilities.verification ? this.db.query<{count:string}>("SELECT count(*)::text count FROM verification_review_case WHERE status IN ('queued','in_review')") : Promise.resolve({rows:[{count:'0'}]} as any),
       capabilities.professionalCarriers ? this.db.query<{count:string}>("SELECT count(*)::text count FROM carrier_profile WHERE mode='professional' AND professional_status='pending'") : Promise.resolve({rows:[{count:'0'}]} as any),
       capabilities.disputes ? this.db.query<{count:string}>("SELECT count(*)::text count FROM deal_dispute WHERE status IN ('open','under_review')") : Promise.resolve({rows:[{count:'0'}]} as any),
       capabilities.payoutIssues ? this.db.query<{count:string}>("SELECT count(*)::text count FROM payout p JOIN deal d ON d.id=p.deal_id WHERE p.status IN ('failed','manual_review') OR d.settlement_status='payout_failed'") : Promise.resolve({rows:[{count:'0'}]} as any),
       capabilities.privacy ? this.db.query<{count:string}>("SELECT count(*)::text count FROM privacy_request WHERE status IN ('open','in_review')") : Promise.resolve({rows:[{count:'0'}]} as any),
+      capabilities.diagnostics ? this.db.query<{count:string}>("SELECT ((SELECT count(*) FROM client_error_event WHERE resolved_at IS NULL)+(SELECT count(*) FROM server_diagnostic_event WHERE resolved_at IS NULL))::text count") : Promise.resolve({rows:[{count:'0'}]} as any),
     ]);
     return {
       role: user.staffRole,
@@ -41,6 +43,7 @@ export class StaffService {
         disputes: Number(disputes.rows[0]?.count ?? 0),
         payoutIssues: Number(payouts.rows[0]?.count ?? 0),
         privacy: Number(privacy.rows[0]?.count ?? 0),
+        diagnostics: Number(diagnostics.rows[0]?.count ?? 0),
       },
     };
   }

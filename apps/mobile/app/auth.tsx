@@ -1,8 +1,9 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authRequest, API_URL } from '@/api/client';
+import { authRequest } from '@/api/client';
+import { API_OVERRIDE_ENABLED, getApiUrl } from '@/api/api-endpoint-store';
 import { useAuth } from '@/auth/auth-context';
 import { colors, radii, themedStyleSheet } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme-context';
@@ -10,8 +11,10 @@ import { BrandLogo } from '@/ui/brand-logo';
 
 export default function AuthScreen(){
   const{user,setAuthenticatedUser}=useAuth();const{mode,setMode}=useAppTheme();
-  const[formMode,setFormMode]=useState<'login'|'register'>('register');const[identifier,setIdentifier]=useState('');const[password,setPassword]=useState('');const[name,setName]=useState('');const[acceptLegal,setAcceptLegal]=useState(false);const[error,setError]=useState('');const[busy,setBusy]=useState(false);
+  const[formMode,setFormMode]=useState<'login'|'register'>('register');const[apiUrl,setApiUrl]=useState('');const devTap=useRef({count:0,last:0});const[identifier,setIdentifier]=useState('');const[password,setPassword]=useState('');const[name,setName]=useState('');const[email,setEmail]=useState('');const[acceptLegal,setAcceptLegal]=useState(false);const[error,setError]=useState('');const[busy,setBusy]=useState(false);
+  useEffect(()=>{void getApiUrl().then(setApiUrl)},[]);
   if(user)return <Redirect href="/(tabs)"/>;
+  const revealDeveloperConnection=()=>{if(!API_OVERRIDE_ENABLED)return;const now=Date.now();devTap.current.count=now-devTap.current.last<1400?devTap.current.count+1:1;devTap.current.last=now;if(devTap.current.count>=5){devTap.current.count=0;router.push('/developer-connection')}};
   const submit=async()=>{
     const cleanIdentifier=identifier.trim();const cleanName=name.trim();
     if(formMode==='register'){
@@ -22,12 +25,12 @@ export default function AuthScreen(){
       if(!/[A-Za-z]/.test(password)||! /\d/.test(password)){setError('Пароль має містити літери та хоча б одну цифру');return}
     }
     setBusy(true);setError('');
-    try{const body=formMode==='register'?{phone:cleanIdentifier,password,displayName:cleanName,acceptTerms:true,acceptPrivacy:true,legalVersion:'2026-08-26-r2'}:{identifier:cleanIdentifier,password};const data=await authRequest(formMode==='register'?'/auth/register':'/auth/login',body);setAuthenticatedUser(data.user);router.replace(data.user.staffRole?'/staff':'/(tabs)')}catch(e){setError(e instanceof Error?e.message:'Request failed')}finally{setBusy(false)}
+    try{const body=formMode==='register'?{phone:cleanIdentifier,email:email.trim()||undefined,password,displayName:cleanName,acceptTerms:true,acceptPrivacy:true,legalVersion:'2026-08-26-r3'}:{identifier:cleanIdentifier,password};const data=await authRequest(formMode==='register'?'/auth/register':'/auth/login',body);setAuthenticatedUser(data.user);router.replace(data.user.staffRole?'/staff':'/(tabs)')}catch(e){setError(e instanceof Error?e.message:'Request failed')}finally{setBusy(false)}
   };
   return <SafeAreaView style={s.page}><View style={s.orb}/><View style={s.header}><View style={s.authBrand}><BrandLogo compact/></View><View style={s.theme}><Pressable onPress={()=>void setMode('dark')} style={[s.themeItem,mode==='dark'&&s.themeActive]}><Text style={[s.themeText,mode==='dark'&&s.themeTextActive]}>D</Text></Pressable><Pressable onPress={()=>void setMode('light')} style={[s.themeItem,mode==='light'&&s.themeActive]}><Text style={[s.themeText,mode==='light'&&s.themeTextActive]}>L</Text></Pressable><Pressable onPress={()=>void setMode('badger')} style={[s.themeItem,mode==='badger'&&s.themeActive]}><Text style={[s.themeText,mode==='badger'&&s.themeTextActive]}>B</Text></Pressable></View></View>
     <View style={s.hero}><Text style={s.heroKicker}>{formMode==='register'?'НОВИЙ ПРОФІЛЬ':'З ПОВЕРНЕННЯМ'}</Text><Text style={s.heroTitle}>{formMode==='register'?'Вантажі знаходять маршрут.':'Продовжуйте свої угоди.'}</Text><Text style={s.heroText}>CargoGo поєднує відправників із водіями, які вже їдуть потрібним напрямком.</Text></View>
-    <View style={s.card}>{formMode==='register'&&<Field value={name} onChangeText={setName} placeholder="Ім’я"/>}<Field value={identifier} onChangeText={setIdentifier} placeholder={formMode==='register'?'Телефон · +380...':'Телефон або email'} keyboardType={formMode==='register'?'phone-pad':'default'} autoCapitalize="none"/><Field value={password} onChangeText={setPassword} placeholder="Пароль · 10+ символів" secureTextEntry/>{formMode==='register'&&<View style={s.legalRow}><Pressable onPress={()=>setAcceptLegal(v=>!v)} style={[s.checkBox,acceptLegal&&s.checkOn]}><Text style={s.checkText}>{acceptLegal?'✓':''}</Text></Pressable><Text style={s.legalText}>Я приймаю <Text style={s.legalLink} onPress={()=>router.push('/legal')}>Умови використання та Політику конфіденційності</Text> (версія 2026-08-26-r2).</Text></View>}{!!error&&<Text style={s.error}>{error}</Text>}<Pressable disabled={busy} onPress={submit} style={({pressed})=>[s.primary,(pressed||busy)&&{opacity:.7}]}><Text style={s.primaryText}>{busy?'ЗАЧЕКАЙТЕ':formMode==='register'?'СТВОРИТИ АКАУНТ':'УВІЙТИ'}</Text><Text style={s.primaryText}>→</Text></Pressable><Pressable onPress={()=>{setFormMode(formMode==='register'?'login':'register');setError('')}} style={s.switch}><Text style={s.switchText}>{formMode==='register'?'Вже маєте акаунт?  Увійти':'Новий користувач?  Зареєструватися'}</Text></Pressable></View>
-    <Text style={s.api}>UI BUILD 1.4.2 · {API_URL}</Text>
+    <View style={s.card}>{formMode==='register'&&<><Field value={name} onChangeText={setName} placeholder="Ім’я"/><Field value={email} onChangeText={setEmail} placeholder="Email (необов’язково)" keyboardType="email-address" autoCapitalize="none"/></>}<Field value={identifier} onChangeText={setIdentifier} placeholder={formMode==='register'?'Телефон · +380...':'Телефон або email'} keyboardType={formMode==='register'?'phone-pad':'default'} autoCapitalize="none"/><Field value={password} onChangeText={setPassword} placeholder="Пароль · 10+ символів" secureTextEntry/>{formMode==='register'&&<View style={s.legalRow}><Pressable onPress={()=>setAcceptLegal(v=>!v)} style={[s.checkBox,acceptLegal&&s.checkOn]}><Text style={s.checkText}>{acceptLegal?'✓':''}</Text></Pressable><Text style={s.legalText}>Я приймаю <Text style={s.legalLink} onPress={()=>router.push('/legal')}>Умови використання та Політику конфіденційності</Text> (версія 2026-08-26-r3).</Text></View>}{!!error&&<Text style={s.error}>{error}</Text>}<Pressable disabled={busy} onPress={submit} style={({pressed})=>[s.primary,(pressed||busy)&&{opacity:.7}]}><Text style={s.primaryText}>{busy?'ЗАЧЕКАЙТЕ':formMode==='register'?'СТВОРИТИ АКАУНТ':'УВІЙТИ'}</Text><Text style={s.primaryText}>→</Text></Pressable><Pressable onPress={()=>{setFormMode(formMode==='register'?'login':'register');setError('')}} style={s.switch}><Text style={s.switchText}>{formMode==='register'?'Вже маєте акаунт?  Увійти':'Новий користувач?  Зареєструватися'}</Text></Pressable></View>
+    <Pressable onPress={revealDeveloperConnection}><Text style={s.api}>UI BUILD 1.7.2 · {apiUrl||'API…'}</Text></Pressable>
   </SafeAreaView>;
 }
 function Field(props:any){return <TextInput {...props} placeholderTextColor={colors.muted} style={s.input}/>}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';import { CurrentUser } from '../auth/current-user.decorator';import type { RequestUser } from '../common/request-user';import { OpsService } from './ops.service';
 @Controller('ops') @UseGuards(AuthGuard)
-export class OpsController{constructor(private readonly ops:OpsService){} @Post('client-error') error(@CurrentUser()u:RequestUser,@Body()b:any){return this.ops.reportClientError(u,b)} @Get('readiness') readiness(@CurrentUser()u:RequestUser){return this.ops.readiness(u)}}
+export class OpsController{constructor(private readonly ops:OpsService){} @Post('client-error') error(@CurrentUser()u:RequestUser,@Body()b:any){return this.ops.reportClientError(u,b)} @Get('readiness') readiness(@CurrentUser()u:RequestUser){return this.ops.readiness(u)} @Get('diagnostics') diagnostics(@CurrentUser()u:RequestUser){return this.ops.diagnostics(u)} @Patch('diagnostics/:source/:id/resolve') resolve(@CurrentUser()u:RequestUser,@Param('source')source:'client'|'server',@Param('id')id:string,@Body()b:any){return this.ops.resolveDiagnostic(u,source,Number(id),String(b?.note??'Reviewed').slice(0,1000))}}

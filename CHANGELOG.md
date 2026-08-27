@@ -1,3 +1,16 @@
+# v1.8.2 — Windows Backup/Restore Hotfix
+
+- Fixed MinIO backup/restore on Windows PowerShell by replacing Docker inspect Go-template mount parsing with `--volumes-from`.
+- Added atomic `.partial` backup handling and stricter command failure checks.
+
+# CargoGo changelog
+
+## 1.8.0
+Grant-readiness foundation: FOP finance split + CSV/XLSX exports, self-hosted diagnostics, PostgreSQL/MinIO backup verification, deterministic DEMO/STAGING seed/reset. See `CHANGELOG_1.8.0_GRANT_READINESS_FOUNDATION.md`.
+
+## 1.7.2
+Persistent form labels/units, EV-aware vehicle form polish, route/edit-form label consistency, and EAS config persistence. See `CHANGELOG_1.7.2_FORM_LABELS_GRANT_POLISH.md`.
+
 ## v1.2.5
 - Android-safe native verification upload transport; see CHANGELOG_1.2.5.md.
 
@@ -5,7 +18,6 @@
 
 See `CHANGELOG_1.2.3.md`.
 
-# CargoGo changelog
 
 ## 1.2.0
 Identity, driver licence and vehicle verification core. See `CHANGELOG_1.2.0.md`.
@@ -55,3 +67,13 @@ Identity, driver licence and vehicle verification core. See `CHANGELOG_1.2.0.md`
 - Legacy v0.6 coordinates are backfilled to nearest catalog city when possible.
 
 - v1.3.2: delivery confirmation refusal protection + geolocated handover evidence.
+
+- 1.7.0 Business & Compliance Foundation: contacts, vehicle economics, accounting separation, liability revision.
+- 1.7.1 Runtime API Override: SecureStore-backed internal endpoint switcher, ngrok health probe, session isolation, preview APK profile, and nullable route-duration typecheck hotfix.
+
+## 1.8.3 — Driver readiness UX & Maps key guard
+- Home readiness checklist and early trip pre-flight gate.
+- Dedicated driver readiness screen with direct verification/carrier actions.
+- Profile exposes readiness and carrier rules as permanent settings.
+- Casual carrier screen links directly to full policy before acceptance.
+- Google Maps Android key is env/EAS-injected and production builds fail fast when it is missing.

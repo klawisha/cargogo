@@ -26,7 +26,7 @@ async function bootstrap() {
   app.setGlobalPrefix('v1');
   app.enableShutdownHooks();
   await app.listen(port, '0.0.0.0');
-  console.log(`CargoGo API v0.9.0 listening on :${port}`);
+  console.log(`CargoGo API v1.8.0 listening on :${port}`);
 }
 
 bootstrap().catch((error: unknown) => {

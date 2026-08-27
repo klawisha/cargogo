@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const must=(f,x)=>{const s=fs.readFileSync(f,'utf8');if(!s.includes(x))throw new Error(`${f}: missing ${x}`)};
+must('apps/mobile/src/readiness/driver-readiness.ts','acceptedCasualPolicyAt');
+must('apps/mobile/src/readiness/driver-readiness.ts','driverReady');
+must('apps/mobile/app/(tabs)/index.tsx','ГОТОВНІСТЬ ДО ПЕРЕВЕЗЕНЬ');
+must('apps/mobile/app/(tabs)/index.tsx',"'/driver-readiness'");
+must('apps/mobile/app/driver-readiness.tsx','Підтвердження особи');
+must('apps/mobile/app/driver-readiness.tsx','Режим перевізника та правила');
+must('apps/mobile/app/create-trip.tsx','if(readiness&&!readiness.ready)');
+must('apps/mobile/app/carrier-mode.tsx','casual-carrier-policy');
+must('apps/mobile/app/(tabs)/profile.tsx','Готовність до перевезень');
+must('apps/mobile/app.config.js','GOOGLE_MAPS_ANDROID_API_KEY is required');
+must('apps/mobile/.env.example','GOOGLE_MAPS_ANDROID_API_KEY=');
+console.log('Driver readiness UX: 11/11 PASS');

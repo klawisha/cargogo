@@ -1,5 +1,5 @@
 import { Redirect, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/ui/screen';
 import { BadgerMark } from '@/ui/badger-mark';
@@ -7,17 +7,19 @@ import { FadeInView } from '@/ui/motion';
 import {useLiveVersion} from '@/live/live-context';
 import { useAuth } from '@/auth/auth-context';
 import { apiFetch } from '@/api/client';
+import { API_OVERRIDE_ENABLED } from '@/api/api-endpoint-store';
 import { colors, radii, themedStyleSheet, type ThemeMode } from '@/theme/tokens';
 import { useAppTheme } from '@/theme/theme-context';
+import {carrierLabel,loadDriverReadiness,type DriverReadiness} from '@/readiness/driver-readiness';
 
 type ProfileData={verification?:{status:string};reputation?:{completedDeals:number;reviewCount:number;rating:number|null}};
 export default function Profile(){const live=useLiveVersion('notifications');
-  const{user,logout}=useAuth();const{mode,setMode}=useAppTheme();const[profile,setProfile]=useState<ProfileData|null>(null);const[unread,setUnread]=useState(0);
-  useFocusEffect(useCallback(()=>{if(!user)return;void apiFetch('/users/me/profile').then(async r=>{if(r.ok)setProfile(await r.json())}).catch(()=>{});void apiFetch('/notifications/unread-count').then(async r=>{if(r.ok)setUnread((await r.json()).count??0)}).catch(()=>{})},[user,live]));
+  const{user,logout}=useAuth();const{mode,setMode}=useAppTheme();const[profile,setProfile]=useState<ProfileData|null>(null);const[readiness,setReadiness]=useState<DriverReadiness|null>(null);const[unread,setUnread]=useState(0);const devTap=useRef({count:0,last:0});
+  useFocusEffect(useCallback(()=>{if(!user)return;void apiFetch('/users/me/profile').then(async r=>{if(r.ok)setProfile(await r.json())}).catch(()=>{});void loadDriverReadiness().then(setReadiness).catch(()=>{});void apiFetch('/notifications/unread-count').then(async r=>{if(r.ok)setUnread((await r.json()).count??0)}).catch(()=>{})},[user,live]));
   if(!user)return <Redirect href="/auth"/>;
-  const rep=profile?.reputation;const signOut=async()=>{await logout();router.replace('/auth')};
+  const rep=profile?.reputation;const signOut=async()=>{await logout();router.replace('/auth')};const revealDeveloperConnection=()=>{if(!API_OVERRIDE_ENABLED)return;const now=Date.now();devTap.current.count=now-devTap.current.last<1400?devTap.current.count+1:1;devTap.current.last=now;if(devTap.current.count>=5){devTap.current.count=0;router.push('/developer-connection')}};
   return <Screen><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom:112}}>
-    <View style={s.header}><View><Text style={s.eyebrow}>ACCOUNT CENTER</Text><Text style={s.pageTitle}>Профіль</Text></View><View style={s.build}><Text style={s.buildText}>UI 1.4.3</Text></View></View>
+    <View style={s.header}><View><Text style={s.eyebrow}>ACCOUNT CENTER</Text><Text style={s.pageTitle}>Профіль</Text></View><Pressable onPress={revealDeveloperConnection} style={s.build}><Text style={s.buildText}>UI 1.8.3</Text></Pressable></View>
     <FadeInView><View style={s.hero}><View style={s.avatar}><Text style={s.avatarText}>{user.displayName.slice(0,2).toUpperCase()}</Text></View><View style={{flex:1}}><Text style={s.name}>{user.displayName}</Text><Text style={s.email}>{user.phone??user.email??'—'}</Text><View style={s.verifyPill}><View style={s.verifyDot}/><Text style={s.verifyText}>{(profile?.verification?.status??user.verificationStatus).toUpperCase()}</Text></View></View></View></FadeInView>
     <FadeInView delay={45}><View style={s.stats}><Stat value={rep?.rating==null?'—':rep.rating.toFixed(2)} label="РЕЙТИНГ"/><Stat value={String(rep?.completedDeals??0)} label="ЗАВЕРШЕНО"/><Stat value={String(rep?.reviewCount??0)} label="ВІДГУКІВ"/></View></FadeInView>
 
@@ -29,7 +31,8 @@ export default function Profile(){const live=useLiveVersion('notifications');
     </View><Text style={s.cardText}>Badger — фірмовий нічний режим: глибокий графіт, теплий маршрутний акцент і медоїд як знак руху CargoGo.</Text></View></FadeInView>
 
     <Text style={s.sectionLabel}>НАЛАШТУВАННЯ</Text>
-    <MenuRow icon="↗" title="Режим перевізника" meta="ПОПУТНИК / ФОП" onPress={()=>router.push('/carrier-mode')}/><MenuRow icon="₴" title="Оплата та виплати" meta="IBAN · payout" onPress={()=>router.push('/payout-settings')}/>
+    <MenuRow icon="@" title="Контакти та відновлення" meta="PHONE · EMAIL · BACKUP" onPress={()=>router.push('/account-contacts')}/>
+    <MenuRow icon="◎" title="Готовність до перевезень" meta={readiness?.ready?'READY':`${readiness?.completed??0}/3 · ПОТРІБНА ДІЯ`} onPress={()=>router.push('/driver-readiness')}/><MenuRow icon="↗" title="Режим перевізника та правила" meta={carrierLabel(readiness)} onPress={()=>router.push('/carrier-mode')}/><MenuRow icon="₴" title="Оплата та виплати" meta="IBAN · payout" onPress={()=>router.push('/payout-settings')}/>
     <MenuRow icon="✓" title="Центр верифікації" meta={(profile?.verification?.status??user.verificationStatus).toUpperCase()} onPress={()=>router.push('/verification')}/>
     {(user.staffRole==='reviewer'||user.staffRole==='verification_reviewer'||user.staffRole==='admin')&&<MenuRow icon="ID" title="Черга верифікації" meta="STAFF" onPress={()=>router.push('/verification-review')}/>} 
     {(user.staffRole==='reviewer'||user.staffRole==='dispute_reviewer'||user.staffRole==='admin')&&<MenuRow icon="!" title="Спори" meta="STAFF" onPress={()=>router.push('/dispute-review')}/>} 

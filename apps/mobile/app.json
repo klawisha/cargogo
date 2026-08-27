@@ -2,56 +2,27 @@
   "expo": {
     "name": "CargoGo",
     "slug": "cargogo",
-    "version": "1.5.0",
+    "version": "1.8.3",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
     "scheme": "cargogo",
+    "icon": "./assets/brand/app-icon.png",
+    "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router",
-      [
-        "expo-navigation-bar",
-        {
-          "enforceContrast": false,
-          "style": "dark",
-          "hidden": true
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "cameraPermission": "CargoGo uses the camera to capture pickup and delivery evidence for deal safety.",
-          "microphonePermission": false
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "CargoGo uses your location during cargo pickup and delivery to strengthen handover evidence and resolve disputes."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "defaultChannel": "deal-events"
-        }
-      ]
+      "expo-secure-store"
     ],
     "android": {
-      "package": "com.cargogo.app",
-      "edgeToEdgeEnabled": true,
-      "config": {
-    "googleMaps": {
-      "apiKey": "AIzaSyCmHQQfEqKsQ8mx4Cz7dhLi1TV6gNu5-94"
-     }
-    },
+      "package": "com.klawisha.cargogo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/app-icon.png",
-        "backgroundColor": "#061016"
+        "backgroundColor": "#081016"
       }
     },
-    "ios": {
-      "bundleIdentifier": "com.cargogo.app"
-    },
-    "icon": "./assets/brand/app-icon.png"
+    "owner": "probel",
+    "extra": {
+      "eas": {
+        "projectId": "2ca05cd4-e779-4ad5-998d-4e3c07809ea0"
+      }
+    }
   }
 }

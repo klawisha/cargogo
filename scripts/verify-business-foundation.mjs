@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const checks=[];const read=p=>fs.readFileSync(p,'utf8');const has=(name,p,needles)=>{const s=read(p);for(const n of needles){if(!s.includes(n))throw new Error(`${name}: missing ${n}`)}checks.push(name)};
+has('migration','infra/postgres/migrations/032_business_compliance_foundation.sql',['backup_phone_e164','fuel_type','operating_expense']);
+has('phone-first registration','apps/api/src/auth/auth.schemas.ts',['phone:','email:']);
+has('contact verification','apps/api/src/users/users.service.ts',['requestContactVerification','confirmContactVerification','backup_phone_e164']);
+has('vehicle economics','apps/api/src/vehicles/vehicle.schemas.ts',['fuelType','curbWeightKg','avgConsumptionPer100']);
+has('casual dynamic cap','apps/api/src/carrier-mode/carrier-mode.service.ts',['estimateCost','maintenanceMinor','depreciationMinor','CASUAL_COST_SHARING_CAP']);
+has('finance accounting','apps/api/src/staff/staff-finance.service.ts',['netPlatformProfitMinor','operating_expense','indicativeTaxBaseMinor']);
+has('legal liability','apps/api/src/legal/legal.documents.ts',['не є перевізником','не компенсує вартість','2026-08-26-r3']);
+has('mobile contacts','apps/mobile/app/account-contacts.tsx',['backup_phone','ОТРИМАТИ КОД']);
+has('mobile vehicle inputs','apps/mobile/app/create-trip.tsx',['fuelType','curbWeight','energyConsumption']);
+console.log(`${checks.length}/${checks.length} CargoGo v1.7 business foundation checks passed`);

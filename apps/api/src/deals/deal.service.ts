@@ -452,6 +452,7 @@ export class DealService {
     return `SELECT d.*,c.title AS cargo_title,c.pickup_public_label,c.delivery_public_label,
       c.pickup_address_private,c.delivery_address_private,
       sender.display_name AS sender_name,driver.display_name AS driver_name,
+      sender.phone_e164 AS sender_phone,driver.phone_e164 AS driver_phone,
       sender.verification_status AS sender_verification_status,driver.verification_status AS driver_verification_status,
       t.origin_public_label,t.destination_public_label,p.status AS payout_status,p.provider AS payout_provider,p.provider_reference AS payout_reference,p.paid_at AS payout_paid_at,
       (SELECT count(*)::int FROM deal_handover_evidence e WHERE e.deal_id=d.id AND e.stage='pickup') AS pickup_evidence_count,
@@ -465,6 +466,7 @@ export class DealService {
 
   private dto(r: any, userId: string, includeCodes = true) {
     const isSender = r.sender_id === userId;
+    const contactUnlocked = ['secured','captured','released'].includes(String(r.payment_status??''));
     const locationUnlocked = ['payment_secured','awaiting_pickup','picked_up','in_transit','arrived','delivered','completed','disputed'].includes(r.status);
     const pickupEvidenceCount = Number(r.pickup_evidence_count ?? 0);
     const deliveryEvidenceCount = Number(r.delivery_evidence_count ?? 0); const driverDeliveryCount=Number(r.driver_delivery_evidence_count??0); const senderDeliveryCount=Number(r.sender_delivery_evidence_count??0); const handoverStarted=!!r.hs_started_at;
@@ -475,8 +477,9 @@ export class DealService {
       id: r.id, cargoId: r.cargo_id, tripId: r.trip_id, offerId: r.offer_id, role: isSender ? 'sender' : 'driver', status: r.status,
       paymentStatus: r.payment_status, paymentMode, agreedAmountMinor: Number(r.agreed_amount_minor), platformFeeMinor: Number(r.platform_fee_minor??0), carrierAmountMinor: Number(r.carrier_amount_minor??0), targetNetMarginMinor: Number(r.target_net_margin_minor??0), estimatedAcquiringFeeMinor: Number(r.estimated_acquiring_fee_minor??0), estimatedPayoutFeeMinor: Number(r.estimated_payout_fee_minor??0), actualAcquiringFeeMinor: r.actual_acquiring_fee_minor===null||r.actual_acquiring_fee_minor===undefined?null:Number(r.actual_acquiring_fee_minor), actualPayoutFeeMinor: r.actual_payout_fee_minor===null||r.actual_payout_fee_minor===undefined?null:Number(r.actual_payout_fee_minor), platformNetRevenueMinor: r.platform_net_revenue_minor===null||r.platform_net_revenue_minor===undefined?null:Number(r.platform_net_revenue_minor), actualNetMarginBps: r.actual_net_margin_bps===null||r.actual_net_margin_bps===undefined?null:Number(r.actual_net_margin_bps), feePolicy: r.fee_policy_snapshot??null, settlementStatus: r.settlement_status??'not_started', payoutStatus:r.payout_status??null, payoutProvider:r.payout_provider??null, payoutPaidAt:r.payout_paid_at??null, currency: r.currency, declaredValueMinor:r.declared_value_minor_snapshot==null?null:Number(r.declared_value_minor_snapshot), declaredValueCurrency:r.declared_value_currency_snapshot??null,
       cargo: { title: r.cargo_title, pickupLabel: r.pickup_public_label, deliveryLabel: r.delivery_public_label, privatePickupAddress: locationUnlocked ? r.pickup_address_private : null, privateDeliveryAddress: locationUnlocked ? r.delivery_address_private : null },
-      sender: { displayName: r.sender_name, verificationStatus: r.sender_verification_status },
-      driver: { displayName: r.driver_name, verificationStatus: r.driver_verification_status },
+      sender: { displayName: r.sender_name, verificationStatus: r.sender_verification_status, phone: contactUnlocked ? r.sender_phone : null },
+      driver: { displayName: r.driver_name, verificationStatus: r.driver_verification_status, phone: contactUnlocked ? r.driver_phone : null },
+      contactsAvailable: contactUnlocked,
       trip: { originLabel: r.origin_public_label, destinationLabel: r.destination_public_label },
       privateLocationsAvailable: locationUnlocked,
       codes: { pickup: pickupCode, delivery: deliveryCode },

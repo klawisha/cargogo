@@ -1,0 +1,10 @@
+﻿{
+    "createdAt":  "2026-08-27T16:40:52.5590585Z",
+    "project":  "CargoGo",
+    "formatVersion":  2,
+    "postgres":  "postgres.dump",
+    "minio":  "minio-data.tar.gz",
+    "postgresSha256":  "B70E5622A09A33E46C46579552889EBC443D45974C7BE9278958EE9AB6CC83F5",
+    "minioSha256":  "8AE6A40AF8596176CD06D756BA656D4FA16092D106CF593428ABE1C82E345200",
+    "minioBackupMethod":  "docker-volumes-from"
+}

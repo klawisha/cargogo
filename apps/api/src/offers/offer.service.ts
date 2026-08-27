@@ -34,7 +34,7 @@ export class OfferService {
       const matched = await client.query('SELECT 1 FROM trip_match WHERE trip_id=$1 AND cargo_id=$2 LIMIT 1', [input.tripId,input.cargoId]);
       if (!matched.rowCount) throw new ForbiddenException({ code:'MATCH_REQUIRED', message:'Cargo is not an eligible match for this trip' });
 
-      const carrierMode=await this.carrierMode.assertOfferAllowed(user.id,input.tripId,input.amountMinor,client);
+      const carrierPolicy=await this.carrierMode.assertOfferAllowed(user.id,input.tripId,input.cargoId,input.amountMinor,client);const carrierMode=carrierPolicy.mode;
       await this.payoutAccounts.requireActive(user.id, client);
 
       const existing = await client.query<{ id:string }>(

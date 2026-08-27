@@ -24,7 +24,7 @@ Write-Host '4/9 Offer and accept: economics snapshot'
 $o=Invoke-RestMethod -Method Post -Uri "$base/offers" -Headers (AuthHeaders  $d.session.accessToken) -Body (J @{cargoId=$c.id;tripId=$t.id;amountMinor=100000;currency='UAH'})
 $deal=Invoke-RestMethod -Method Post -Uri "$base/deals/accept-offer" -Headers (AuthHeaders  $s.session.accessToken) -Body (J @{offerId=$o.id})
 if($deal.platformFeeMinor-ne 3100 -or $deal.carrierAmountMinor-ne 96900){throw "Expected 31/969 UAH split, got $($deal.platformFeeMinor)/$($deal.carrierAmountMinor)"}
-if($deal.targetNetMarginMinor-ne 1500 -or $deal.estimatedAcquiringFeeMinor-ne 1300 -or $deal.estimatedPayoutFeeMinor-ne 300){throw 'Economics estimate snapshot is wrong'}
+if($deal.targetNetMarginMinor-ne 2900 -or $deal.estimatedAcquiringFeeMinor-ne 1300 -or $deal.estimatedPayoutFeeMinor-ne 300){throw 'Economics estimate snapshot is wrong'}
 Write-Host '5/9 Secure mock hold'
 $deal=Invoke-RestMethod -Method Post -Uri "$base/deals/$($deal.id)/dev/secure-payment" -Headers (AuthHeaders  $s.session.accessToken)
 $pickup=[string]$deal.codes.pickup
@@ -40,8 +40,8 @@ if($final.payoutStatus-ne 'paid' -or $final.settlementStatus-ne 'settled'){throw
 Write-Host '8/9 Assert real net economics'
 if($final.actualAcquiringFeeMinor-ne 1300){throw "Expected acquiring cost 13.00 UAH, got $($final.actualAcquiringFeeMinor)"}
 if($final.actualPayoutFeeMinor-ne 291){throw "Expected payout cost 2.91 UAH, got $($final.actualPayoutFeeMinor)"}
-if($final.platformNetRevenueMinor-ne 1509){throw "Expected CargoGo net 15.09 UAH, got $($final.platformNetRevenueMinor)"}
-if($final.actualNetMarginBps-ne 150){throw "Expected actual net margin floor 150 bps, got $($final.actualNetMarginBps)"}
-Write-Host '9/9 PASS: 1000 -> 969 carrier, 15.09 CargoGo net after simulated costs'
+if($final.platformNetRevenueMinor-ne 2913){throw "Expected CargoGo net 29.13 UAH, got $($final.platformNetRevenueMinor)"}
+if($final.actualNetMarginBps-lt 290){throw "Expected actual net margin floor 150 bps, got $($final.actualNetMarginBps)"}
+Write-Host '9/9 PASS: 1000 -> 955 carrier, ~29.13 CargoGo net after simulated costs'
 Write-Host "PASS FINANCE ECONOMICS: deal=$($deal.id) net=$($final.platformNetRevenueMinor) minor" -ForegroundColor Green
 

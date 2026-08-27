@@ -1,12 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '../auth/auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
-import type { RequestUser } from '../common/request-user';
-import { UsersService } from './users.service';
-
-@Controller('users')
-@UseGuards(AuthGuard)
-export class UsersController {
-  constructor(private readonly users: UsersService) {}
-  @Get('me/profile') profile(@CurrentUser() user: RequestUser) { return this.users.profile(user); }
-}
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';import { CurrentUser } from '../auth/current-user.decorator';import type { RequestUser } from '../common/request-user';import { ZodValidationPipe } from '../common/zod-validation.pipe';import { contactVerificationConfirmSchema,contactVerificationRequestSchema } from './users.schemas';import { UsersService } from './users.service';
+@Controller('users') @UseGuards(AuthGuard)
+export class UsersController {constructor(private readonly users:UsersService){}@Get('me/profile')profile(@CurrentUser()user:RequestUser){return this.users.profile(user)}@Post('me/contacts/request-verification')request(@CurrentUser()user:RequestUser,@Body(new ZodValidationPipe(contactVerificationRequestSchema))body:any){return this.users.requestContactVerification(user,body)}@Post('me/contacts/confirm')confirm(@CurrentUser()user:RequestUser,@Body(new ZodValidationPipe(contactVerificationConfirmSchema))body:any){return this.users.confirmContactVerification(user,body)}}

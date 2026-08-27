@@ -9,6 +9,7 @@ type VehicleRow = {
   label: string;
   body_type: string;
   max_payload_kg: string | null;
+  fuel_type:string|null; engine_displacement_cc:number|null; curb_weight_kg:string|null; gross_weight_kg:string|null; avg_consumption_per_100:string|null; energy_consumption_kwh_100:string|null;
   cargo_length_cm: string | null;
   cargo_width_cm: string | null;
   cargo_height_cm: string | null;
@@ -25,12 +26,12 @@ export class VehicleService {
 
   async create(user: RequestUser, input: CreateVehicleInput) {
     const result = await this.db.query<VehicleRow>(`
-      INSERT INTO vehicle(owner_id,label,body_type,max_payload_kg,cargo_length_cm,cargo_width_cm,cargo_height_cm,client_reference)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+      INSERT INTO vehicle(owner_id,label,body_type,fuel_type,engine_displacement_cc,curb_weight_kg,gross_weight_kg,max_payload_kg,avg_consumption_per_100,energy_consumption_kwh_100,cargo_length_cm,cargo_width_cm,cargo_height_cm,client_reference)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       ON CONFLICT (owner_id,client_reference) WHERE client_reference IS NOT NULL
       DO UPDATE SET updated_at=vehicle.updated_at
       RETURNING *
-    `, [user.id, input.label, input.bodyType, input.maxPayloadKg ?? null, input.cargoLengthCm ?? null, input.cargoWidthCm ?? null, input.cargoHeightCm ?? null, input.clientReference ?? null]);
+    `, [user.id,input.label,input.bodyType,input.fuelType,input.engineDisplacementCc??null,input.curbWeightKg,input.grossWeightKg??null,input.maxPayloadKg??null,input.avgConsumptionPer100??null,input.energyConsumptionKwh100??null,input.cargoLengthCm??null,input.cargoWidthCm??null,input.cargoHeightCm??null,input.clientReference??null]);
     return this.toDto(result.rows[0]);
   }
 
@@ -55,6 +56,7 @@ export class VehicleService {
       label: row.label,
       bodyType: row.body_type,
       maxPayloadKg: row.max_payload_kg === null ? null : Number(row.max_payload_kg),
+      fuelType:row.fuel_type,engineDisplacementCc:row.engine_displacement_cc,curbWeightKg:row.curb_weight_kg===null?null:Number(row.curb_weight_kg),grossWeightKg:row.gross_weight_kg===null?null:Number(row.gross_weight_kg),avgConsumptionPer100:row.avg_consumption_per_100===null?null:Number(row.avg_consumption_per_100),energyConsumptionKwh100:row.energy_consumption_kwh_100===null?null:Number(row.energy_consumption_kwh_100),
       cargoSpace: {
         lengthCm: row.cargo_length_cm === null ? null : Number(row.cargo_length_cm),
         widthCm: row.cargo_width_cm === null ? null : Number(row.cargo_width_cm),

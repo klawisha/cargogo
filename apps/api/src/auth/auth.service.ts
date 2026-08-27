@@ -43,12 +43,13 @@ export class AuthService {
 
   async register(input: RegisterInput, metadata: { userAgent?: string; ip?: string }) {
     const phone = this.normalizePhone(input.phone);
-    const existing = await this.db.query('SELECT 1 FROM app_user WHERE phone_e164=$1 LIMIT 1', [phone]);
-    if (existing.rowCount) throw new ConflictException({ code: 'PHONE_IN_USE', message: 'Phone number is already registered' });
+    const email = input.email ? this.normalizeEmail(input.email) : null;
+    const existing = await this.db.query('SELECT 1 FROM app_user WHERE phone_e164=$1 OR ($2::text IS NOT NULL AND lower(email)=$2) LIMIT 1', [phone,email]);
+    if (existing.rowCount) throw new ConflictException({ code: 'CONTACT_IN_USE', message: 'Phone number or email is already registered' });
     if (input.legalVersion !== LEGAL_VERSION) throw new ConflictException({code:'LEGAL_VERSION_STALE',message:'Please review the current Terms and Privacy Policy'});
     const passwordHash = await hashPassword(input.password);
     const user = await this.db.transaction(async client=>{
-      const result = await client.query<UserRow>(`INSERT INTO app_user(phone_e164,display_name,password_hash) VALUES($1,$2,$3) RETURNING id,email,phone_e164,display_name,password_hash,status,verification_status,staff_role`, [phone, input.displayName.trim(), passwordHash]);
+      const result = await client.query<UserRow>(`INSERT INTO app_user(phone_e164,email,display_name,password_hash) VALUES($1,$2,$3,$4) RETURNING id,email,phone_e164,display_name,password_hash,status,verification_status,staff_role`, [phone, email, input.displayName.trim(), passwordHash]);
       const created=result.rows[0];
       for(const key of ['terms-of-use','privacy-policy']) await client.query(`INSERT INTO legal_acceptance(user_id,document_key,document_version,ip,user_agent,metadata) VALUES($1,$2,$3,$4,$5,$6::jsonb)`,[created.id,key,LEGAL_VERSION,metadata.ip??null,metadata.userAgent??null,JSON.stringify({source:'registration'})]);
       await client.query(`INSERT INTO audit_event(actor_user_id,event_type,entity_type,metadata) VALUES($1,'legal.registration_acceptance','legal_document',$2::jsonb)`,[created.id,JSON.stringify({version:LEGAL_VERSION,documents:['terms-of-use','privacy-policy']})]);
@@ -64,7 +65,7 @@ export class AuthService {
     const isEmail=identifier.includes('@');
     const normalized=isEmail?this.normalizeEmail(identifier):this.normalizePhone(identifier);
     const result = await this.db.query<UserRow>(`SELECT id,email,phone_e164,display_name,password_hash,status,verification_status,staff_role
-      FROM app_user WHERE ${isEmail?'email':'phone_e164'}=$1 LIMIT 1`, [normalized]);
+      FROM app_user WHERE ${isEmail?'lower(email)':'phone_e164'}=$1 ${isEmail?'AND email_verified_at IS NOT NULL':''} LIMIT 1`, [normalized]);
     const user = result.rows[0];
     if (!user || !(await verifyPassword(input.password, user.password_hash))) {
       throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS', message: 'Invalid phone/email or password' });

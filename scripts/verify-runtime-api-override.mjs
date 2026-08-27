@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const checks=[];const add=(name,ok)=>checks.push([name,!!ok]);
+const store=read('apps/mobile/src/api/api-endpoint-store.ts');
+const client=read('apps/mobile/src/api/client.ts');
+const screen=read('apps/mobile/app/developer-connection.tsx');
+const auth=read('apps/mobile/app/auth.tsx');
+const profile=read('apps/mobile/app/(tabs)/profile.tsx');
+const layout=read('apps/mobile/app/_layout.tsx');
+const eas=JSON.parse(read('apps/mobile/eas.json'));
+const trip=read('apps/api/src/trips/trip.service.ts');
+add('SecureStore endpoint override',store.includes('cargogo.api.endpoint.override.v1')&&store.includes('SecureStore.setItemAsync'));
+add('production override disabled by default',store.includes("EXPO_PUBLIC_ENABLE_API_OVERRIDE === '1'")&&eas.build.production.env.EXPO_PUBLIC_ENABLE_API_OVERRIDE==='0');
+add('internal profiles enable override',eas.build.preview.env.EXPO_PUBLIC_ENABLE_API_OVERRIDE==='1'&&eas.build.development.env.EXPO_PUBLIC_ENABLE_API_OVERRIDE==='1');
+add('dynamic URL used by API requests',client.includes('await getApiUrl()')&&!client.includes('`${API_URL}${path}`'));
+add('ngrok warning bypass header',store.includes('ngrok-skip-browser-warning'));
+add('health probe with timeout',store.includes('/health/ready')&&store.includes('AbortController'));
+add('save requires successful probe',screen.includes('Спочатку успішно перевірте цю адресу'));
+add('session logout before endpoint switch',screen.includes('await logout();const next=await setApiOverride'));
+add('auth hidden entry',auth.includes("router.push('/developer-connection')")&&auth.includes('count>=5'));
+add('profile hidden entry',profile.includes("router.push('/developer-connection')")&&profile.includes('count>=5'));
+add('screen registered',layout.includes('name="developer-connection"'));
+add('nullable fallback duration typecheck fix',(trip.match(/route\.durationS\?\?0/g)||[]).length>=2);
+let pass=0;for(const [n,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${n}`);if(ok)pass++;}
+console.log(`Runtime API override: ${pass}/${checks.length}`);if(pass!==checks.length)process.exitCode=1;

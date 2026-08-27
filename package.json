@@ -1,6 +1,6 @@
 {
   "name": "cargogo",
-  "version": "1.6.5",
+  "version": "1.8.4",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -41,7 +41,20 @@
     "verify:production-readiness": "node scripts/verify-production-readiness.mjs",
     "release:gate": "node scripts/run-release-gate.mjs",
     "verification:on": "powershell -ExecutionPolicy Bypass -File scripts/enable-verification.ps1",
-    "verify:reconsent": "node scripts/verify-reconsent-gate.mjs"
+    "verify:reconsent": "node scripts/verify-reconsent-gate.mjs",
+    "economics:v1.7": "powershell -ExecutionPolicy Bypass -File scripts/enable-v1.7-economics.ps1",
+    "verify:business-foundation": "node scripts/verify-business-foundation.mjs",
+    "verify:runtime-api": "node scripts/verify-runtime-api-override.mjs",
+    "demo:seed": "tsx scripts/demo-seed.ts",
+    "demo:reset": "tsx scripts/demo-reset.ts",
+    "backup:local": "powershell -ExecutionPolicy Bypass -File scripts/backup-local.ps1",
+    "backup:verify": "powershell -ExecutionPolicy Bypass -File scripts/verify-backup.ps1",
+    "verify:grant-readiness": "node scripts/verify-grant-readiness.mjs",
+    "verify:badger-run": "node scripts/verify-badger-run-reset.mjs",
+    "verify:driver-readiness": "node scripts/verify-driver-readiness-ux.mjs",
+    "verify:paid-contact-gate": "node scripts/verify-paid-contact-gate.mjs",
+    "maps:check:local": "node scripts/verify-maps-key.mjs",
+    "maps:check:production": "eas env:exec production \"node scripts/verify-maps-key.mjs\""
   },
   "engines": {
     "node": ">=22.0.0"

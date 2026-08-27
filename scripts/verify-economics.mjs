@@ -1,5 +1,5 @@
 const amount = 100000;
-const target = 150;
+const target = 290;
 const acquiring = 130;
 const payoutEstimate = 30;
 const payoutActual = 30;
@@ -12,7 +12,7 @@ const carrier = amount - fee;
 const payoutActualMinor = bps(carrier, payoutActual);
 const net = fee - acquiringMinor - payoutActualMinor;
 const marginBps = Number((BigInt(net) * 10000n) / BigInt(amount));
-const expected = { fee:3100, carrier:96900, acquiringMinor:1300, payoutActualMinor:291, net:1509, marginBps:150 };
+const expected = { fee:4500, carrier:95500, acquiringMinor:1300, payoutActualMinor:287, net:2913, marginBps:291 };
 const actual = { fee, carrier, acquiringMinor, payoutActualMinor, net, marginBps };
 for (const [key, value] of Object.entries(expected)) {
   if (actual[key] !== value) throw new Error(`${key}: expected ${value}, got ${actual[key]}`);

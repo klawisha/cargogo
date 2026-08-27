@@ -39,6 +39,8 @@ export type Vehicle = {
   label: string;
   bodyType: 'sedan' | 'hatchback' | 'wagon' | 'suv' | 'van' | 'pickup' | 'other';
   maxPayloadKg: number | null;
+  fuelType:'petrol'|'diesel'|'lpg'|'petrol_lpg'|'hybrid'|'plug_in_hybrid'|'electric'|null;
+  engineDisplacementCc:number|null;curbWeightKg:number|null;grossWeightKg:number|null;avgConsumptionPer100:number|null;energyConsumptionKwh100:number|null;
   cargoSpace: { lengthCm: number | null; widthCm: number | null; heightCm: number | null };
   verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
   createdAt: string;
@@ -153,8 +155,9 @@ export type Deal = {
     privatePickupAddress: string | null;
     privateDeliveryAddress: string | null;
   };
-  sender: { displayName: string; verificationStatus: string };
-  driver: { displayName: string; verificationStatus: string };
+  sender: { displayName: string; verificationStatus: string; phone: string | null };
+  driver: { displayName: string; verificationStatus: string; phone: string | null };
+  contactsAvailable: boolean;
   trip: { originLabel: string; destinationLabel: string };
   privateLocationsAvailable: boolean;
   codes: { pickup: string | null; delivery: string | null };
