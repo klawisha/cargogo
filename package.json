@@ -1,6 +1,6 @@
 {
   "name": "cargogo",
-  "version": "1.8.4",
+  "version": "1.8.10",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -54,15 +54,14 @@
     "verify:driver-readiness": "node scripts/verify-driver-readiness-ux.mjs",
     "verify:paid-contact-gate": "node scripts/verify-paid-contact-gate.mjs",
     "maps:check:local": "node scripts/verify-maps-key.mjs",
-    "maps:check:production": "eas env:exec production \"node scripts/verify-maps-key.mjs\""
+    "maps:check:production": "eas env:exec production \"node scripts/verify-maps-key.mjs\"",
+    "verify:intracity": "node scripts/verify-v1.8.6-intracity.mjs",
+    "verify:file-proxy": "node scripts/verify-file-proxy.mjs"
   },
   "engines": {
     "node": ">=22.0.0"
   },
-  "dependencies": {
-    "expo-dev-client": "~57.0.15",
-    "expo": "57.0.16",
-    "react": "19.2.3",
-    "react-native": "0.86.2"
+  "allowScripts": {
+    "esbuild@0.25.12": true
   }
 }

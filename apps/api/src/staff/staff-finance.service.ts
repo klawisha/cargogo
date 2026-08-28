@@ -27,8 +27,12 @@ export class StaffFinanceService{
    // the number of current-month routed trip records; exact counting continues in RoutingService.
    const mapboxReq=Math.max(recordedMapboxReq,observedRouted);
    const mapboxErr=this.metric(usage.rows,'mapbox_directions','errors');
+   const geocodingReq=this.metric(usage.rows,'osm_nominatim','requests');
+   const geocodingErr=this.metric(usage.rows,'osm_nominatim','errors');
+   const geocodingResolved=this.metric(usage.rows,'osm_nominatim','resolved');
    const usageCards=[
     {key:'mapbox_directions',label:'Mapbox Directions',used:mapboxReq,limit:100000,unit:'requests',freeTier:true,status:mapboxReq>=90000?'critical':mapboxReq>=70000?'warning':'ok',detail:`${mapboxErr} errors this month · ${observedRouted} successful routed trip records observed`},
+    {key:'osm_nominatim',label:'OpenStreetMap Nominatim',used:geocodingReq,limit:null,unit:'requests',freeTier:true,status:'info',detail:`${geocodingResolved} resolved · ${geocodingErr} errors · public endpoint is free but limited to max 1 request/sec; requests are serialized and cached by persisted cargo/trip coordinates`},
     {key:'cloudflare_r2_storage',label:'Object storage',used:storage.bytes,limit:10*1024*1024*1024,unit:'bytes',freeTier:true,status:storage.bytes>=9*1024**3?'critical':storage.bytes>=7*1024**3?'warning':'ok',detail:`${storage.objects} tracked objects · R2 free tier reference 10 GB-month`},
     {key:'r2_class_a',label:'R2 Class A operations',used:storage.writeEstimate,limit:1_000_000,unit:'operations',freeTier:true,status:'ok',detail:'Estimate from stored/upload records; provider console remains source of truth'},
     {key:'r2_class_b',label:'R2 Class B operations',used:storage.readEstimate,limit:10_000_000,unit:'operations',freeTier:true,status:'ok',detail:'Estimate from evidence access logs; provider console remains source of truth'},

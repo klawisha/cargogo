@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 const unreserved=/^[A-Za-z0-9\-_.~]$/;
 function awsEncode(value:string){return Array.from(Buffer.from(value,'utf8')).map((b)=>{const c=String.fromCharCode(b);return unreserved.test(c)?c:`%${b.toString(16).toUpperCase().padStart(2,'0')}`}).join('')}
@@ -31,6 +31,43 @@ export class VerificationStorageService{
     const kDate=hmac(`AWS4${this.secret()}`,day),kRegion=hmac(kDate,this.region()),kService=hmac(kRegion,'s3'),kSigning=hmac(kService,'aws4_request');
     const signature=createHmac('sha256',kSigning).update(stringToSign).digest('hex');
     endpoint.pathname=uri;endpoint.search=`${canonicalQuery}&X-Amz-Signature=${signature}`;return endpoint.toString();
+  }
+
+
+  private proxySecret(){return this.config.get<string>('FILE_PROXY_SIGNING_SECRET')?.trim()||this.secret()}
+
+  createProxyToken(key:string,ttlSeconds:number){
+    const payload=Buffer.from(JSON.stringify({v:1,k:key,e:Math.floor(Date.now()/1000)+Math.max(1,ttlSeconds)}),'utf8').toString('base64url');
+    const signature=createHmac('sha256',this.proxySecret()).update(payload).digest('base64url');
+    return `${payload}.${signature}`;
+  }
+
+  verifyProxyToken(token:string){
+    const [payload,signature,extra]=token.split('.');
+    if(!payload||!signature||extra)throw new BadRequestException({code:'FILE_ACCESS_TOKEN_INVALID',message:'File access token is invalid'});
+    const expected=createHmac('sha256',this.proxySecret()).update(payload).digest('base64url');
+    const a=Buffer.from(signature),b=Buffer.from(expected);
+    if(a.length!==b.length||!timingSafeEqual(a,b))throw new BadRequestException({code:'FILE_ACCESS_TOKEN_INVALID',message:'File access token is invalid'});
+    let parsed:any;
+    try{parsed=JSON.parse(Buffer.from(payload,'base64url').toString('utf8'))}catch{throw new BadRequestException({code:'FILE_ACCESS_TOKEN_INVALID',message:'File access token is invalid'})}
+    if(parsed?.v!==1||typeof parsed?.k!=='string'||!parsed.k||!Number.isFinite(parsed?.e))throw new BadRequestException({code:'FILE_ACCESS_TOKEN_INVALID',message:'File access token is invalid'});
+    if(parsed.e<Math.floor(Date.now()/1000))throw new BadRequestException({code:'FILE_ACCESS_TOKEN_EXPIRED',message:'File access token has expired'});
+    return parsed.k as string;
+  }
+
+  proxyUrl(key:string,ttlSeconds:number,publicBaseUrl:string){
+    const base=publicBaseUrl.replace(/\/+$/,'');
+    return `${base}/v1/files/object?token=${encodeURIComponent(this.createProxyToken(key,ttlSeconds))}`;
+  }
+
+  async getObject(key:string){
+    let response:Response;
+    try{response=await fetch(this.presign('GET',key,60),{method:'GET'})}catch{throw new ServiceUnavailableException({code:'FILE_STORAGE_UNAVAILABLE',message:'File storage is temporarily unavailable'})}
+    if(response.status===404)throw new BadRequestException({code:'FILE_NOT_FOUND',message:'File was not found'});
+    if(!response.ok)throw new ServiceUnavailableException({code:'FILE_STORAGE_READ_FAILED',message:'File storage could not read the requested file',status:response.status});
+    const bytes=Buffer.from(await response.arrayBuffer());
+    const mimeType=(response.headers.get('content-type')??this.detectMime(bytes)).split(';')[0].trim().toLowerCase();
+    return {bytes,mimeType};
   }
 
   detectMime(b:Buffer){

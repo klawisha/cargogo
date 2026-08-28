@@ -5,5 +5,6 @@ import { VerificationService } from './verification.service';
 import { ManualVerificationController } from './manual-verification.controller';
 import { ManualVerificationService } from './manual-verification.service';
 import { VerificationStorageService } from './verification-storage.service';
-@Module({imports:[AuthModule],controllers:[VerificationController,ManualVerificationController],providers:[VerificationService,ManualVerificationService,VerificationStorageService],exports:[VerificationService,VerificationStorageService]})
+import { FileProxyController } from './file-proxy.controller';
+@Module({imports:[AuthModule],controllers:[VerificationController,ManualVerificationController,FileProxyController],providers:[VerificationService,ManualVerificationService,VerificationStorageService],exports:[VerificationService,VerificationStorageService]})
 export class VerificationModule{}

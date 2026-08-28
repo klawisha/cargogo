@@ -25,7 +25,7 @@ export type DriverReadiness = {
   ready:boolean;
   completed:number;
   total:number;
-  next:'identity'|'license_vehicle'|'carrier'|null;
+  next:'identity'|'license'|'vehicle'|'carrier'|null;
 };
 
 export async function loadDriverReadiness():Promise<DriverReadiness>{
@@ -38,9 +38,9 @@ export async function loadDriverReadiness():Promise<DriverReadiness>{
   const licenseReady=verification.driverLicense?.status==='verified';
   const vehicleReady=(verification.vehicles??[]).some(v=>v.status==='verified');
   const carrierReady=carrier.mode==='casual'?!!carrier.acceptedCasualPolicyAt:carrier.professionalStatus==='verified';
-  const completed=[identityReady,licenseReady&&vehicleReady,carrierReady].filter(Boolean).length;
-  const next=!identityReady?'identity':!(licenseReady&&vehicleReady)?'license_vehicle':!carrierReady?'carrier':null;
-  return {verification,carrier,identityReady,licenseReady,vehicleReady,carrierReady,ready:identityReady&&licenseReady&&vehicleReady&&carrierReady,completed,total:3,next};
+  const completed=[identityReady,licenseReady,vehicleReady,carrierReady].filter(Boolean).length;
+  const next=!identityReady?'identity':!licenseReady?'license':!vehicleReady?'vehicle':!carrierReady?'carrier':null;
+  return {verification,carrier,identityReady,licenseReady,vehicleReady,carrierReady,ready:identityReady&&licenseReady&&vehicleReady&&carrierReady,completed,total:4,next};
 }
 
 export function carrierLabel(r:DriverReadiness|null){

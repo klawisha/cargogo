@@ -26,7 +26,7 @@ export class OpsService{
    this.db.query<any>(`SELECT document_key,count(*)::int acceptances FROM legal_acceptance WHERE document_version=$1 GROUP BY document_key`,[LEGAL_VERSION]),
    this.db.query<any>(`SELECT count(*) FILTER(WHERE status IN('open','in_review'))::int open FROM privacy_request`)
   ]);
-  const env={nodeEnv:this.config.get('NODE_ENV'),paymentsMode:this.config.get('PAYMENTS_MODE'),payoutsMode:this.config.get('PAYOUTS_MODE'),kycMode:this.config.get('KYC_MODE'),verificationEnforcement:this.config.get('VERIFICATION_ENFORCEMENT'),publicBaseUrl:this.config.get('PUBLIC_BASE_URL'),routingProvider:this.config.get('ROUTING_PROVIDER'),mapboxConfigured:!!this.config.get('MAPBOX_ACCESS_TOKEN')};
+  const env={nodeEnv:this.config.get('NODE_ENV'),paymentsMode:this.config.get('PAYMENTS_MODE'),payoutsMode:this.config.get('PAYOUTS_MODE'),kycMode:this.config.get('KYC_MODE'),verificationEnforcement:this.config.get('VERIFICATION_ENFORCEMENT'),publicBaseUrl:this.config.get('PUBLIC_BASE_URL'),routingProvider:this.config.get('ROUTING_PROVIDER'),mapboxConfigured:!!this.config.get('MAPBOX_ACCESS_TOKEN'),geocodingProvider:this.config.get('GEOCODING_PROVIDER')};
   const f=funnel.rows[0]??{};const checks=[
    {key:'db',label:'Database/schema',status:'pass',detail:'API responded and readiness query succeeded'},
    {key:'verification',label:'Verification enforcement',status:env.verificationEnforcement==='on'?'pass':'fail',detail:env.verificationEnforcement==='on'?'on · shipper/driver verification enforced':'off · API environment override detected'},

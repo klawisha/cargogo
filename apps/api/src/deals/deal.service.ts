@@ -213,7 +213,7 @@ export class DealService {
     }
   }
 
-  async handoverEvidenceAccess(user: RequestUser, id: string, evidenceId: string, purpose: string) {
+  async handoverEvidenceAccess(user: RequestUser, id: string, evidenceId: string, purpose: string, publicBaseUrl: string) {
     const r = await this.db.query<any>(
       `SELECT e.* FROM deal_handover_evidence e JOIN deal d ON d.id=e.deal_id
        WHERE e.id=$1 AND e.deal_id=$2 AND (d.sender_id=$3 OR d.driver_id=$3 OR $4)`,
@@ -222,7 +222,7 @@ export class DealService {
     const evidence = r.rows[0];
     if (!evidence) throw new NotFoundException({ code:'HANDOVER_EVIDENCE_NOT_FOUND', message:'Handover evidence not found' });
     await this.db.query(`INSERT INTO deal_handover_evidence_access_log(evidence_id,actor_user_id,purpose) VALUES($1,$2,$3)`, [evidenceId,user.id,purpose.trim()]);
-    return { url: this.evidenceStorage.presign('GET', evidence.object_key, 300), expiresInSeconds: 300 };
+    return { url: this.evidenceStorage.proxyUrl(evidence.object_key, 300, publicBaseUrl), expiresInSeconds: 300 };
   }
 
   private async requireHandoverEvidence(client: PoolClient, dealId: string, stage: CodeKind) {

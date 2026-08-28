@@ -1,8 +1,4 @@
-const base = require('./app.json');
-
 module.exports = () => {
-  // Keep the Maps key outside the repository. Expo loads apps/mobile/.env.local
-  // for local builds; EAS receives the same variable from its environment/secret store.
   const googleMapsApiKey = process.env.GOOGLE_MAPS_ANDROID_API_KEY?.trim();
   const buildProfile = process.env.EAS_BUILD_PROFILE?.trim();
 
@@ -14,13 +10,23 @@ module.exports = () => {
   }
 
   return {
-    ...base.expo,
+    name: 'CargoGo',
+    slug: 'cargogo',
+    version: '1.8.10',
+    orientation: 'portrait',
+    scheme: 'cargogo',
+    icon: './assets/brand/app-icon.png',
+    userInterfaceStyle: 'automatic',
+    plugins: ['expo-router', 'expo-secure-store'],
     android: {
-      ...base.expo.android,
-      config: {
-        ...(base.expo.android?.config ?? {}),
-        ...(googleMapsApiKey ? { googleMaps: { apiKey: googleMapsApiKey } } : {}),
+      package: 'com.klawisha.cargogo',
+      adaptiveIcon: {
+        foregroundImage: './assets/brand/app-icon.png',
+        backgroundColor: '#081016',
       },
+      ...(googleMapsApiKey ? { config: { googleMaps: { apiKey: googleMapsApiKey } } } : {}),
     },
+    owner: 'probel',
+    extra: { eas: { projectId: '2ca05cd4-e779-4ad5-998d-4e3c07809ea0' } },
   };
 };

@@ -1,7 +1,8 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard'; import { CurrentUser } from '../auth/current-user.decorator'; import type { RequestUser } from '../common/request-user'; import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { disputeAccessSchema,disputePhotoUploadSchema,disputeResolveSchema,evidenceSchema,openDisputeSchema } from './dispute.schemas'; import { DisputeService } from './dispute.service';
+import { disputeAccessSchema,disputePhotoUploadSchema,disputeResolveSchema,evidenceSchema,openDisputeSchema } from './dispute.schemas'; import { DisputeService } from './dispute.service'; import { publicBaseUrl } from '../common/public-base-url';
 @Controller('disputes') @UseGuards(AuthGuard) export class DisputeController{constructor(private readonly disputes:DisputeService){}
 @Get('mine') mine(@CurrentUser()u:RequestUser){return this.disputes.mine(u)}
 @Get('review/queue') queue(@CurrentUser()u:RequestUser){return this.disputes.reviewQueue(u)}
@@ -14,5 +15,5 @@ import { disputeAccessSchema,disputePhotoUploadSchema,disputeResolveSchema,evide
 @Post(':id/evidence') evidence(@CurrentUser()u:RequestUser,@Param('id')id:string,@Body(new ZodValidationPipe(evidenceSchema))b:any){return this.disputes.addEvidence(u,id,b.text)}
 @Post(':id/evidence/photo') @UseInterceptors(FileInterceptor('file',{limits:{fileSize:10*1024*1024,files:1,fields:2,parts:3}}))
 photo(@CurrentUser()u:RequestUser,@Param('id')id:string,@UploadedFile()file:any,@Body(new ZodValidationPipe(disputePhotoUploadSchema))b:any){if(!file?.buffer)throw new BadRequestException({code:'DISPUTE_PHOTO_REQUIRED',message:'Photo was not received'});return this.disputes.addPhoto(u,id,b.note,file)}
-@Post(':id/evidence/:evidenceId/access-url') access(@CurrentUser()u:RequestUser,@Param('id')id:string,@Param('evidenceId')evidenceId:string,@Body(new ZodValidationPipe(disputeAccessSchema))b:any){return this.disputes.evidenceAccess(u,id,Number(evidenceId),b.purpose)}
+@Post(':id/evidence/:evidenceId/access-url') access(@CurrentUser()u:RequestUser,@Param('id')id:string,@Param('evidenceId')evidenceId:string,@Body(new ZodValidationPipe(disputeAccessSchema))b:any,@Req()req:Request){return this.disputes.evidenceAccess(u,id,Number(evidenceId),b.purpose,publicBaseUrl(req))}
 }

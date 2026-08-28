@@ -1,11 +1,13 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { RequestUser } from '../common/request-user';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { acceptOfferSchema, cancelDealSchema, createReviewSchema, dealIdSchema, evidenceAccessSchema, handoverEvidenceUploadSchema, deliveryProblemSchema, handoverPresenceSchema, verifyDealCodeSchema } from './deal.schemas';
 import { DealService } from './deal.service';
+import { publicBaseUrl } from '../common/public-base-url';
 
 @Controller('deals')
 @UseGuards(AuthGuard)
@@ -44,7 +46,8 @@ export class DealController {
     @Param('id', new ZodValidationPipe(dealIdSchema)) id: string,
     @Param('evidenceId', new ZodValidationPipe(dealIdSchema)) evidenceId: string,
     @Body(new ZodValidationPipe(evidenceAccessSchema)) body: {purpose:string},
-  ) { return this.deals.handoverEvidenceAccess(user,id,evidenceId,body.purpose); }
+    @Req() req: Request,
+  ) { return this.deals.handoverEvidenceAccess(user,id,evidenceId,body.purpose,publicBaseUrl(req)); }
 
   @Post(':id/pickup/confirm')
   confirmPickup(@CurrentUser() user: RequestUser, @Param('id', new ZodValidationPipe(dealIdSchema)) id: string, @Body(new ZodValidationPipe(verifyDealCodeSchema)) body: { code: string }) {
