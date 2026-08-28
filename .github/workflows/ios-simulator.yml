@@ -7,12 +7,11 @@ jobs:
   build-ios-simulator:
     name: Build iOS Simulator
     runs-on: macos-15
+    timeout-minutes: 90
 
-    timeout-minutes: 60
-
-    defaults:
-      run:
-        working-directory: apps/mobile
+    env:
+      CI: true
+      EXPO_NO_TELEMETRY: 1
 
     steps:
       - name: Checkout repository
@@ -26,17 +25,20 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: .
         run: npm ci
 
       - name: Show environment
+        working-directory: apps/mobile
         run: |
           node --version
           npm --version
-          xcodebuild -version
           npx expo --version
+          xcodebuild -version
+          swift --version
+          pod --version
 
-      - name: Expo prebuild
+      - name: Generate iOS project
+        working-directory: apps/mobile
         run: |
           npx expo prebuild \
             --platform ios \
@@ -48,33 +50,95 @@ jobs:
         run: |
           pod install --repo-update
 
+      - name: Show Xcode project
+        working-directory: apps/mobile/ios
+        run: |
+          echo "=== Workspace ==="
+          ls -la CargoGo.xcworkspace
+
+          echo "=== Schemes ==="
+          xcodebuild \
+            -workspace CargoGo.xcworkspace \
+            -list
+
+      - name: Resolve Xcode packages
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+
+          xcodebuild \
+            -resolvePackageDependencies \
+            -workspace CargoGo.xcworkspace \
+            -scheme CargoGo \
+            2>&1 | tee ../../xcode-resolve.log
+
       - name: Build CargoGo for iOS Simulator
+        working-directory: apps/mobile/ios
         run: |
-          rm -rf build-output
+          set -o pipefail
 
-          npx expo run:ios \
-            --device generic \
-            --configuration Release \
-            --output build-output/CargoGo.app
+          rm -rf ../../build-output
+          mkdir -p ../../build-output
 
-      - name: Verify app bundle
+          xcodebuild \
+            -workspace CargoGo.xcworkspace \
+            -scheme CargoGo \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath ../../build-output/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            build \
+            2>&1 | tee ../../xcode-build.log
+
+      - name: Find CargoGo.app
+        if: success()
         run: |
-          echo "CargoGo.app contents:"
-          ls -la build-output/CargoGo.app
+          APP_PATH=$(find build-output/DerivedData/Build/Products \
+            -type d \
+            -name "CargoGo.app" \
+            | head -1)
 
-          echo "Executable:"
-          /usr/libexec/PlistBuddy \
-            -c "Print :CFBundleExecutable" \
-            build-output/CargoGo.app/Info.plist
+          if [ -z "$APP_PATH" ]; then
+            echo "CargoGo.app was not found."
+            exit 1
+          fi
 
-          echo "Bundle identifier:"
+          echo "Found app:"
+          echo "$APP_PATH"
+
+          rm -rf build-output/CargoGo.app
+          cp -R "$APP_PATH" build-output/CargoGo.app
+
+      - name: Verify Simulator app
+        if: success()
+        run: |
+          echo "=== Bundle identifier ==="
+
           /usr/libexec/PlistBuddy \
             -c "Print :CFBundleIdentifier" \
             build-output/CargoGo.app/Info.plist
 
+          echo "=== Executable ==="
+
+          EXECUTABLE=$(/usr/libexec/PlistBuddy \
+            -c "Print :CFBundleExecutable" \
+            build-output/CargoGo.app/Info.plist)
+
+          echo "$EXECUTABLE"
+
+          echo "=== Binary info ==="
+
+          file \
+            "build-output/CargoGo.app/$EXECUTABLE"
+
       - name: Package for Appetize
+        if: success()
         run: |
           cd build-output
+
           ditto \
             -c \
             -k \
@@ -83,9 +147,23 @@ jobs:
             CargoGo.app \
             CargoGo-iOS-Simulator.zip
 
-      - name: Upload CargoGo artifact
+          ls -lh CargoGo-iOS-Simulator.zip
+
+      - name: Upload CargoGo Simulator
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: CargoGo-iOS-Simulator
-          path: apps/mobile/build-output/CargoGo-iOS-Simulator.zip
+          path: build-output/CargoGo-iOS-Simulator.zip
           retention-days: 14
+
+      - name: Upload Xcode logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CargoGo-iOS-Build-Logs
+          path: |
+            xcode-resolve.log
+            xcode-build.log
+          if-no-files-found: ignore
+          retention-days: 7
