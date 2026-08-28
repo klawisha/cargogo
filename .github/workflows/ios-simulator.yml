@@ -24,6 +24,29 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      - name: Select Swift 6.2 compatible Xcode
+        shell: bash
+        run: |
+          echo "=== Installed Xcode versions ==="
+          ls -d /Applications/Xcode*.app
+
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+
+          if [ -z "$XCODE_PATH" ]; then
+            echo "ERROR: Xcode 26.x was not found."
+            exit 1
+          fi
+
+          echo "Using: $XCODE_PATH"
+
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+
+          echo "=== Selected Xcode ==="
+          xcodebuild -version
+
+          echo "=== Selected Swift ==="
+          swift --version
+          
       - name: Install dependencies
         run: npm ci
 
