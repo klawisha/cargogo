@@ -18,6 +18,12 @@ module.exports = () => {
     icon: './assets/brand/app-icon.png',
     userInterfaceStyle: 'automatic',
     plugins: ['expo-router', 'expo-secure-store'],
+    
+    ios: {
+      bundleIdentifier: 'com.klawisha.cargogo',
+      supportsTablet: true,
+    },
+    
     android: {
       package: 'com.klawisha.cargogo',
       adaptiveIcon: {

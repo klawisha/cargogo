@@ -1,0 +1,91 @@
+name: CargoGo iOS Simulator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios-simulator:
+    name: Build iOS Simulator
+    runs-on: macos-15
+
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Show environment
+        run: |
+          node --version
+          npm --version
+          xcodebuild -version
+          npx expo --version
+
+      - name: Expo prebuild
+        run: |
+          npx expo prebuild \
+            --platform ios \
+            --clean \
+            --no-install
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: |
+          pod install --repo-update
+
+      - name: Build CargoGo for iOS Simulator
+        run: |
+          rm -rf build-output
+
+          npx expo run:ios \
+            --device generic \
+            --configuration Release \
+            --output build-output/CargoGo.app
+
+      - name: Verify app bundle
+        run: |
+          echo "CargoGo.app contents:"
+          ls -la build-output/CargoGo.app
+
+          echo "Executable:"
+          /usr/libexec/PlistBuddy \
+            -c "Print :CFBundleExecutable" \
+            build-output/CargoGo.app/Info.plist
+
+          echo "Bundle identifier:"
+          /usr/libexec/PlistBuddy \
+            -c "Print :CFBundleIdentifier" \
+            build-output/CargoGo.app/Info.plist
+
+      - name: Package for Appetize
+        run: |
+          cd build-output
+          ditto \
+            -c \
+            -k \
+            --sequesterRsrc \
+            --keepParent \
+            CargoGo.app \
+            CargoGo-iOS-Simulator.zip
+
+      - name: Upload CargoGo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CargoGo-iOS-Simulator
+          path: apps/mobile/build-output/CargoGo-iOS-Simulator.zip
+          retention-days: 14
